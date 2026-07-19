@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a focused improvement to Agent coordination.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Coordination problem
+      description: Describe the concrete Agent or operator workflow that is inefficient or unsafe.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the user-visible behavior rather than only an implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: invariants
+    attributes:
+      label: State and autonomy impact
+      description: Note effects on Agent autonomy, state ownership, completion, Git, security, or compatibility.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: The proposal does not require SessionBridge to execute unknown Agent side effects automatically.
+          required: true

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · Agent</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+  <div id="app"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    const d = SB_MOCK.dashboard;
+    const activeWaits = d.waits.filter((w) => w.status === "active");
+    const externalWaits = d.external_waits.filter((w) => w.status === "active");
+
+    function statePill(state) {
+      if (state === "active" || state === "consumed" || state === "concluded") return "ok";
+      if (state === "waiting" || state === "pending") return "info";
+      if (state === "blocked" || state === "revoked") return "e";
+      return "m";
+    }
+
+    const cards = d.participants.map((agent) => {
+      const wait = activeWaits.find((w) => w.session_id === agent.session_id);
+      const external = externalWaits.find((w) => w.session_id === agent.session_id);
+      const initial = agent.label.slice(0, 1);
+      return `<div class="agent-card">
+        <div class="avatar agent">${initial}</div>
+        <div>
+          <div class="head">
+            <strong>${agent.label}</strong>
+            <span class="pill ${statePill(agent.state)}">${agent.state}</span>
+          </div>
+          <div class="model">${agent.model || "未声明模型"}</div>
+          <dl>
+            <dt>分支</dt><dd>${agent.branch || "—"}</dd>
+            <dt>最后活动</dt><dd>${SB_SHELL.relativeMicros(agent.last_seen_at_micros)}</dd>
+            ${wait ? `<dt>WorkItem 等待</dt><dd>${wait.mode} · ${wait.targets.map((t) => SB_SHELL.shortId(t)).join(", ")}</dd>` : ""}
+            ${external ? `<dt>外部等待</dt><dd title="${external.detector.path}">${external.detector_type} · ${external.detector.path}</dd>
+              <dt>观测次数</dt><dd>${external.observation_count}</dd>` : ""}
+          </dl>
+        </div>
+      </div>`;
+    }).join("");
+
+    const invites = d.invitations.map((inv) => `
+      <div class="table-row invite-cols">
+        <span class="mono">${SB_SHELL.shortId(inv.batch_id)} / ${SB_SHELL.shortId(inv.id)}</span>
+        <span>${inv.participant_kind}</span>
+        <span><span class="pill ${statePill(inv.state)}">${inv.state}</span></span>
+        <span>${SB_SHELL.relativeMicros(inv.expires_at_micros)}</span>
+        <span>${inv.blocks_completion ? "是" : "否"}</span>
+      </div>`).join("");
+
+    const content = `
+      <div class="stack">
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>参与者</h2>
+              <p>${d.participants.length} 个已接入会话 · 对齐 participants / waits / external_waits</p>
+            </div>
+            <a class="btn s sm" href="prompts.html">查看提示词</a>
+          </div>
+          <div class="agent-grid">${cards}</div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>邀请席位</h2>
+              <p>${d.invitations.filter((i) => i.state === "pending").length} 个等待接入 · 阻塞完成：${d.invitations.filter((i) => i.blocks_completion && i.state === "pending").length}</p>
+            </div>
+          </div>
+          <div class="table-row header invite-cols">
+            <span>批次 / 席位</span><span>类型</span><span>状态</span><span>到期</span><span>阻塞完成</span>
+          </div>
+          ${invites}
+        </section>
+      </div>`;
+
+    SB_SHELL.mountShell({
+      activePage: "agents",
+      title: d.details.task.title,
+      eyebrow: "Agent",
+      phase: "active",
+      actionsHtml: `
+        <button class="btn icon" type="button" title="刷新">↻</button>
+        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
+        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      contentHtml: content,
+    });
+  </script>
+</body>
+</html>

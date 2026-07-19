@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a reproducible SessionBridge defect.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove invitation tokens, Session tokens, context contents, database files,
+        private paths, and real collaboration identifiers before submitting.
+
+  - type: input
+    id: version
+    attributes:
+      label: SessionBridge version
+      placeholder: sessionbridge 0.1.0 or commit SHA
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Linux distribution, filesystem type, Git, Rust, Node.js
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: State the observed and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide sanitized commands and the smallest reproducible state.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Sanitized output
+      description: Include stable error codes and invocation IDs, but no secrets.
+      render: text
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI or machine protocol
+        - Planning, Claims, or WorkAttempts
+        - Waiting or completion
+        - Invitations or Session join
+        - Git worktrees or integration
+        - SQLite storage or migration
+        - Chat or diagnostics
+        - Desktop GUI
+        - Build or packaging
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I removed secrets, private paths, and real Task/Session identifiers.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · 诊断</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+  <div id="app"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    const collab = SB_MOCK.collaboration;
+    const doctor = SB_MOCK.doctor;
+    const logs = SB_MOCK.logs;
+    const ws = SB_MOCK.workspace;
+
+    function diagRows(items) {
+      return items.map((item) => {
+        const cls = item.status === "pass" ? "pass" : item.status === "fail" ? "fail" : "";
+        const ico = item.status === "pass" ? "✓" : "!";
+        return `<div class="diagnostic-row">
+          <span class="diagnostic-icon ${cls}">${ico}</span>
+          <span><strong>${item.code}</strong><small>${item.message}</small></span>
+        </div>`;
+      }).join("");
+    }
+
+    const logRows = logs.entries.map((entry) => `
+      <div>
+        <time>${entry.record.timestamp || ""}</time>
+        <code>${entry.record.event || entry.record.message || ""}</code>
+      </div>`).join("");
+
+    const content = `
+      <div class="stack">
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>协作诊断</h2>
+              <p>${collab.critical_count} 个严重问题 · ${collab.warning_count} 个警告 · collaboration_diagnostics</p>
+            </div>
+            <button class="btn icon" type="button" title="重新运行">↻</button>
+          </div>
+          <div class="diagnostic-list">${diagRows(collab.findings)}</div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>环境诊断</h2>
+              <p class="mono" style="margin:3px 0 0;font-size:11px;color:rgb(var(--ink3))">${ws.database_path}</p>
+            </div>
+            <button class="btn icon" type="button" title="重新运行">↻</button>
+          </div>
+          <div class="diagnostic-list">${diagRows(doctor.diagnostics)}</div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>运行日志</h2>
+              <p>最近 JSONL · logs_tail</p>
+            </div>
+          </div>
+          <div class="log-view">${logRows}</div>
+        </section>
+      </div>`;
+
+    SB_SHELL.mountShell({
+      activePage: "diagnostics",
+      title: SB_MOCK.dashboard.details.task.title,
+      eyebrow: "诊断",
+      phase: "active",
+      actionsHtml: `
+        <button class="btn icon" type="button" title="刷新">↻</button>
+        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
+        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      contentHtml: content,
+    });
+  </script>
+</body>
+</html>

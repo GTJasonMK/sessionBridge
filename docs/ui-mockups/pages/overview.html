@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · 概览</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+  <div id="app"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    const d = SB_MOCK.dashboard;
+    const s = d.health.signals;
+    const attention = s.open_blockers + s.open_required_gaps + s.open_invalidations + s.required_deliverables_open;
+    const p = d.pipeline;
+
+    function stage(label, complete, total, detail) {
+      const ready = total === 0 || complete >= total;
+      const pct = total === 0 ? 100 : Math.round((complete / total) * 100);
+      return `<div class="pipeline-stage">
+        <span class="pipeline-icon ${ready ? "ready" : ""}">${ready ? "✓" : "○"}</span>
+        <div>
+          <small>${label}</small>
+          <strong>${complete} / ${total}</strong>
+          <p>${detail || (ready ? "当前阶段已满足" : `${total - complete} 项待处理`)}</p>
+        </div>
+        <div class="pipeline-progress"><i style="width:${pct}%"></i></div>
+      </div>`;
+    }
+
+    const deliverables = d.deliverables.map((item) => {
+      const st = item.status === "verified" || item.status === "waived" ? "ok"
+        : item.status === "submitted" ? "info" : item.status === "open" ? "w" : "m";
+      return `<div class="table-row deliverable-cols">
+        <span class="item-title"><strong>${item.title}</strong><small>${item.key}${item.required ? " · required" : ""}</small></span>
+        <span>${item.kind}</span>
+        <span><span class="pill ${st}">${item.status}</span></span>
+        <span>${item.work_item_ids.length}</span>
+        <span>${item.evidence_ids.length}</span>
+      </div>`;
+    }).join("");
+
+    const events = [...d.recent_events.events].slice(0, 6).map((ev) => `
+      <div class="event-row">
+        <span class="event-icon">⌁</span>
+        <span><strong>${ev.event_type}</strong><small>${ev.actor_type}${ev.actor_id ? " · " + SB_SHELL.shortId(ev.actor_id) : ""}</small></span>
+        <time>${SB_SHELL.relativeMicros(ev.created_at_micros)}</time>
+      </div>`).join("");
+
+    const blockers = d.health.completion_signal_warnings
+      .filter((w) => w.count > 0)
+      .map((w) => `<span class="pill ${w.severity === "critical" ? "e" : "w"}">${w.code} · ${w.count}</span>`)
+      .join("");
+
+    const content = `
+      <div class="stack">
+        <div class="context-bar">
+          <span>◎ 概览</span>
+          <span>游标 ${d.health.event_cursor}</span>
+          <span>Plan v${d.health.task.plan_version}</span>
+          <span>分支 ${d.details.task.target_branch}</span>
+        </div>
+
+        <div class="metric-strip">
+          <div class="metric tone-ok">
+            <span class="label">活跃 Agent</span>
+            <span class="value">${s.active_participants}</span>
+            <span class="detail">${s.waiting_participants} 等待 · ${s.concluded_participants} 已停止</span>
+          </div>
+          <div class="metric tone-warn">
+            <span class="label">需要关注</span>
+            <span class="value">${attention}</span>
+            <span class="detail">${s.open_blockers} 阻塞 · ${s.open_required_gaps} 缺口</span>
+          </div>
+          <div class="metric tone-p">
+            <span class="label">事件游标</span>
+            <span class="value">${d.health.event_cursor}</span>
+            <span class="detail">计划版本 ${d.health.task.plan_version}</span>
+          </div>
+        </div>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>交付流水线</h2>
+              <p>各阶段独立计算，不以单一百分比推断任务完成</p>
+            </div>
+          </div>
+          <div class="pipeline-grid">
+            ${stage("Deliverable", p.required_deliverables_verified, p.required_deliverables_total)}
+            ${stage("WorkItem", p.work_items_accepted, p.work_items_total)}
+            ${stage("Review", p.reviews_approved, p.reviews_required)}
+            ${stage("Integration", p.integrations_completed, p.integrations_required)}
+            ${stage("Completion", p.completion_blocker_count === 0 ? 1 : 0, 1, p.completion_blocker_count ? p.completion_blocker_count + " 个机械阻塞" : "机械条件已清空")}
+          </div>
+          ${blockers ? `<div class="completion-blockers">${blockers}</div>` : ""}
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>交付清单</h2>
+              <p>${d.deliverables.filter((x) => x.status === "verified" || x.status === "waived").length}/${d.deliverables.length} 已满足</p>
+            </div>
+          </div>
+          <div class="table-row header deliverable-cols">
+            <span>交付项</span><span>类型</span><span>状态</span><span>工作项</span><span>Evidence</span>
+          </div>
+          ${deliverables}
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div><h2>任务健康</h2><p>由 Rust 领域层实时计算</p></div>
+          </div>
+          <div class="health-grid">
+            <div class="health-row">
+              <span class="health-icon">✓</span>
+              <span><small>规划</small><strong>${d.health.planning_required ? "需要继续规划" : "已覆盖"}</strong></span>
+            </div>
+            <div class="health-row">
+              <span class="health-icon warn">!</span>
+              <span><small>完成队列</small><strong>${d.health.completion_cohort_open ? "仍有邀请席位" : "已关闭"}</strong></span>
+            </div>
+            <div class="health-row">
+              <span class="health-icon">✓</span>
+              <span><small>推进能力</small><strong>${d.health.no_progress_possible ? "无法推进" : "可继续推进"}</strong></span>
+            </div>
+            <div class="health-row">
+              <span class="health-icon">✓</span>
+              <span><small>最终状态</small><strong>${d.health.task.phase}</strong></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div><h2>最近活动</h2><p>${d.recent_events.events.length} 条事件</p></div>
+            <a class="btn pl sm" href="activity.html">查看全部</a>
+          </div>
+          <div class="event-list">${events}</div>
+        </section>
+      </div>`;
+
+    SB_SHELL.mountShell({
+      activePage: "overview",
+      title: d.details.task.title,
+      eyebrow: "概览",
+      phase: "active",
+      actionsHtml: `
+        <button class="btn icon" type="button" title="刷新">↻</button>
+        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
+        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      contentHtml: content,
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+/*
+ * SessionBridge UI Mockups — Design Tokens
+ * 风格：iOS / 简约 / 朴素 / 丝滑；相对 A4N 暖棕，主色微调为静谧靛蓝
+ */
+
+:root {
+  /* 主色与文字 */
+  --p: 72 98 176;
+  --p-deep: 52 74 148;
+  --ink: 28 33 48;
+  --ink2: 72 82 108;
+  --ink3: 112 122 142;
+
+  /* 表面 */
+  --bg: 236 239 246;
+  --g: 244 246 252;
+  --paper: 252 253 255;
+  --fill: 232 236 245;
+  --sep: 198 206 222;
+  --surface-hi: 255 255 255;
+
+  /* 语义色 */
+  --ok: 46 148 98;
+  --warn: 196 132 48;
+  --err: 196 78 78;
+  --info: 72 98 176;
+  --live: 46 148 98;
+
+  /* 圆角 / 高度 */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 14px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-2xl: 28px;
+  --h-header: 52px;
+  --h-ctrl: 36px;
+  --h-ctrl-lg: 40px;
+  --sidebar-w: 248px;
+  --rail-w: 300px;
+
+  /* 阴影 */
+  --sh: 0 1px 2px rgb(28 33 48 / .04), 0 8px 24px -12px rgb(28 33 48 / .12);
+  --sh2: 0 4px 10px rgb(28 33 48 / .05), 0 16px 36px -14px rgb(28 33 48 / .16);
+  --sh3: 0 20px 50px -18px rgb(28 33 48 / .26);
+  --sh-p: 0 1px 2px rgb(var(--p) / .22), 0 10px 22px -12px rgb(var(--p) / .5);
+  --focus-ring: 0 0 0 3px rgb(var(--p) / .22);
+
+  /* 字体 */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Noto Sans SC", "Segoe UI", sans-serif;
+  --serif: "Noto Serif SC", "Songti SC", "Source Han Serif SC", serif;
+  --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  /* 动效 */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+  --dur: .18s;
+  --dur-slow: .32s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.auto-dark,
+  :root[data-theme="dark"] {
+    --p: 120 148 230;
+    --p-deep: 96 124 210;
+    --ink: 236 240 250;
+    --ink2: 176 186 210;
+    --ink3: 132 142 166;
+    --bg: 18 20 28;
+    --g: 24 27 36;
+    --paper: 30 34 46;
+    --fill: 40 46 62;
+    --sep: 58 66 86;
+    --surface-hi: 36 40 54;
+    --ok: 72 186 128;
+    --warn: 230 168 72;
+    --err: 230 110 110;
+    --sh: 0 1px 2px rgb(0 0 0 / .25), 0 10px 28px -12px rgb(0 0 0 / .45);
+    --sh2: 0 6px 16px rgb(0 0 0 / .3), 0 20px 40px -16px rgb(0 0 0 / .5);
+    --sh3: 0 24px 56px -16px rgb(0 0 0 / .6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --p: 120 148 230;
+  --p-deep: 96 124 210;
+  --ink: 236 240 250;
+  --ink2: 176 186 210;
+  --ink3: 132 142 166;
+  --bg: 18 20 28;
+  --g: 24 27 36;
+  --paper: 30 34 46;
+  --fill: 40 46 62;
+  --sep: 58 66 86;
+  --surface-hi: 36 40 54;
+  --ok: 72 186 128;
+  --warn: 230 168 72;
+  --err: 230 110 110;
+  --sh: 0 1px 2px rgb(0 0 0 / .25), 0 10px 28px -12px rgb(0 0 0 / .45);
+  --sh2: 0 6px 16px rgb(0 0 0 / .3), 0 20px 40px -16px rgb(0 0 0 / .5);
+  --sh3: 0 24px 56px -16px rgb(0 0 0 / .6);
+}

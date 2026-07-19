@@ -1,0 +1,38 @@
+/target/
+/gui/node_modules/
+/gui/dist/
+/gui/src-tauri/gen/
+
+# SessionBridge machine-local state and secrets.
+/.sessionbridge/local.toml
+/.sessionbridge/state.db*
+/.sessionbridge/contexts/
+/.sessionbridge/invites/
+/.sessionbridge/prompts/
+/.sessionbridge/launches/
+/.sessionbridge/logs/
+
+# Local environment and editor state.
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Test and coverage output.
+/coverage/
+*.profraw
+
+# Local installer artifacts.
+*.AppImage
+*.deb
+*.rpm
+*.msi
+*.dmg
+
+*.db
+*.db-shm
+*.db-wal

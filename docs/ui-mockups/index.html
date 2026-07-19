@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · UI Mockups 索引</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/atoms.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <link rel="stylesheet" href="css/polish.css" />
+</head>
+<body>
+  <div class="doc">
+    <header class="doc-hero">
+      <span class="eyebrow">SessionBridge · Operator Console</span>
+      <h1>UI 重设计 Mockups</h1>
+      <p>
+        参照 A4N 的 iOS / 简约 / 朴素 / 丝滑风格，将主色微调为静谧靛蓝。
+        本目录产出<strong>真实可打开的前端预览</strong>，按页面与组件职责拆分，字段对齐现有 Tauri GUI 与 Rust 后端能力
+        （Workspace、Task、Dashboard、Chat、Launch、Prompt、Doctor）。
+      </p>
+      <div class="doc-meta">
+        <span><b>风格</b> iOS · Glass · 微动效</span>
+        <span><b>范围</b> 仅布局与样式 · 不改业务契约</span>
+        <span><b>数据</b> 模拟 task_snapshot</span>
+        <span><b>主题</b> 浅色 / 深色</span>
+      </div>
+      <div class="doc-links">
+        <a href="components/atoms.html">组件库</a>
+        <a href="pages/workspace-gate.html">Workspace 门禁</a>
+        <a href="pages/overview.html">概览</a>
+        <a href="pages/work.html">工作项</a>
+        <a href="pages/agents.html">Agent</a>
+        <a href="pages/chat.html">群聊</a>
+        <a href="pages/activity.html">活动</a>
+        <a href="pages/diagnostics.html">诊断</a>
+        <a href="pages/launch.html">发布任务</a>
+        <a href="pages/prompts.html">Agent 提示词</a>
+      </div>
+    </header>
+
+    <div class="callout">
+      <b>设计原则</b>
+      <ul>
+        <li>操作者路径：发布任务 → 接入 Agent → 观察结果；不替 Agent 做决策。</li>
+        <li>信息架构对齐现有 GUI 六页：概览 / 工作项 / Agent / 群聊 / 活动 / 诊断 + 门禁与两个对话框。</li>
+        <li>视觉：暖灰背景、纸面卡片、半透明顶栏、左侧选中条、柔和阴影与 160–320ms 缓动。</li>
+        <li>文件职责：<code>css/</code> 令牌与样式 · <code>js/</code> 模拟数据与壳层 · <code>pages/</code> 页面 · <code>components/</code> 组件展柜。</li>
+      </ul>
+    </div>
+
+    <nav class="toc" aria-label="页面目录">
+      <a href="#ia">信息架构</a>
+      <a href="#map">功能映射</a>
+      <a href="#pages">页面预览</a>
+      <a href="#files">目录结构</a>
+      <a href="#impl">落地建议</a>
+    </nav>
+
+    <section id="ia">
+      <div class="sec-h"><h2>信息架构</h2><span class="tag">IA</span></div>
+      <p class="lead">三栏 Operator Console：侧栏（Workspace + 任务列表 + 页面导航）· 主区（页面内容）· Inspector（任务元数据 / 完成条件 / 相位操作）。</p>
+      <div class="surface" style="padding:18px">
+        <div class="grid3">
+          <div class="soft" style="margin:0">
+            <h5>侧栏</h5>
+            <div class="muted">Workspace 切换 · 任务列表（phase 点）· 六页导航 · 主题 · 实时同步状态</div>
+          </div>
+          <div class="soft" style="margin:0">
+            <h5>主区</h5>
+            <div class="muted">玻璃顶栏（标题 + phase + 刷新 / 提示词 / 发布）· 可滚动内容区</div>
+          </div>
+          <div class="soft" style="margin:0">
+            <h5>Inspector</h5>
+            <div class="muted">Task ID / 分支 / 自治策略 / Epoch / Plan · 完成条件 · 暂停/恢复</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="map">
+      <div class="sec-h"><h2>前后端功能映射</h2><span class="tag">API</span></div>
+      <p class="lead">每个页面只展示后端已提供的能力，避免画空壳功能。</p>
+      <div class="section-block">
+        <div class="table-row header deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>页面</span><span>Tauri / API</span><span>主要数据</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>门禁</span><span class="mono">workspace_restore / open / initialize</span><span>WorkspaceView · GuiError</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>概览</span><span class="mono">task_snapshot</span><span>pipeline · deliverables · health · events</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>工作项</span><span class="mono">task_snapshot</span><span>work_items · relations · speculative_work</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>Agent</span><span class="mono">task_snapshot</span><span>participants · invitations · waits</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>群聊</span><span class="mono">chat_send · snapshot.chat_messages</span><span>ChatMessage · kind · reply</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>活动</span><span class="mono">task_snapshot.recent_events</span><span>EventView 流</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>诊断</span><span class="mono">doctor_run · collaboration_diagnostics · logs_tail</span><span>findings · JSONL</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>发布</span><span class="mono">launch_preflight · launch_execute</span><span>LaunchInput · Preflight</span>
+        </div>
+        <div class="table-row deliverable-cols" style="min-width:0;grid-template-columns:1.1fr 1.4fr 1.6fr">
+          <span>提示词</span><span class="mono">prompt_list · prompt_show</span><span>InvitationManifest</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="pages">
+      <div class="sec-h"><h2>页面预览入口</h2><span class="tag">Pages</span></div>
+      <p class="lead">每个链接打开独立 HTML，内嵌桌面窗口框与完整布局，可直接浏览器查看。</p>
+      <div class="showcase-grid">
+        <a class="showcase-card" href="components/atoms.html" style="text-decoration:none;color:inherit">
+          <h4>组件库</h4>
+          <div class="muted">按钮、徽章、指标、表单、状态点</div>
+        </a>
+        <a class="showcase-card" href="pages/workspace-gate.html" style="text-decoration:none;color:inherit">
+          <h4>Workspace 门禁</h4>
+          <div class="muted">打开 / 初始化 / 错误恢复</div>
+        </a>
+        <a class="showcase-card" href="pages/overview.html" style="text-decoration:none;color:inherit">
+          <h4>概览</h4>
+          <div class="muted">指标 · 流水线 · 交付 · 健康</div>
+        </a>
+        <a class="showcase-card" href="pages/work.html" style="text-decoration:none;color:inherit">
+          <h4>工作项</h4>
+          <div class="muted">列表 / 依赖图 · 隔离探索</div>
+        </a>
+        <a class="showcase-card" href="pages/agents.html" style="text-decoration:none;color:inherit">
+          <h4>Agent</h4>
+          <div class="muted">参与者卡片 · 邀请席位</div>
+        </a>
+        <a class="showcase-card" href="pages/chat.html" style="text-decoration:none;color:inherit">
+          <h4>群聊</h4>
+          <div class="muted">消息流 · 类型 · 回复</div>
+        </a>
+        <a class="showcase-card" href="pages/activity.html" style="text-decoration:none;color:inherit">
+          <h4>活动</h4>
+          <div class="muted">完整事件流</div>
+        </a>
+        <a class="showcase-card" href="pages/diagnostics.html" style="text-decoration:none;color:inherit">
+          <h4>诊断</h4>
+          <div class="muted">协作 / 环境 / 日志</div>
+        </a>
+        <a class="showcase-card" href="pages/launch.html" style="text-decoration:none;color:inherit">
+          <h4>发布任务</h4>
+          <div class="muted">表单 · Preflight · 确认</div>
+        </a>
+        <a class="showcase-card" href="pages/prompts.html" style="text-decoration:none;color:inherit">
+          <h4>Agent 提示词</h4>
+          <div class="muted">席位列表 · 复制 prompt</div>
+        </a>
+      </div>
+    </section>
+
+    <section id="files">
+      <div class="sec-h"><h2>目录结构</h2><span class="tag">Files</span></div>
+      <div class="surface" style="padding:16px 18px">
+        <pre class="mono" style="margin:0;font-size:12px;line-height:1.7;color:rgb(var(--ink2));white-space:pre-wrap">docs/ui-mockups/
+├── index.html                 # 本索引与设计说明
+├── css/
+│   ├── tokens.css             # 设计令牌（色 / 圆角 / 阴影 / 动效）
+│   ├── atoms.css              # 原子组件
+│   ├── layout.css             # 壳层与文档页布局
+│   ├── pages.css              # 页面级样式
+│   └── polish.css             # 跨页抛光与动效
+├── js/
+│   ├── mock-data.js           # 对齐 types.ts 的模拟数据
+│   └── shell.js               # 侧栏 / 顶栏 / Inspector 拼装
+├── components/
+│   └── atoms.html             # 组件真实展示
+└── pages/
+    ├── workspace-gate.html
+    ├── overview.html
+    ├── work.html
+    ├── agents.html
+    ├── chat.html
+    ├── activity.html
+    ├── diagnostics.html
+    ├── launch.html
+    └── prompts.html</pre>
+      </div>
+    </section>
+
+    <section id="impl">
+      <div class="sec-h"><h2>落地到 gui/ 的建议</h2><span class="tag">Next</span></div>
+      <div class="callout" style="margin:0">
+        <b>不在本轮改 React 代码</b>，仅交付可预览 mockup。后续实现时可：
+        <ul>
+          <li>将 <code>tokens.css</code> 变量迁移到 <code>gui/src/styles.css</code> 的 <code>:root</code>。</li>
+          <li>按页面拆分 <code>App.tsx</code> 为 <code>pages/*</code> + <code>components/*</code>，壳层复用本目录 IA。</li>
+          <li>保留现有 Query 刷新间隔与 API 契约；只换 class 与布局。</li>
+          <li>动效尊重 <code>prefers-reduced-motion</code>，与 polish 层一致。</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="doc-footer">
+      SessionBridge UI Mockups · 风格参照 A4N ios-polish · 配色微调靛蓝 · 2026-07-19
+    </footer>
+  </div>
+</body>
+</html>

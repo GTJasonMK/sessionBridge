@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · Workspace 门禁</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .page-wrap { width: min(1100px, 100%); }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <a class="btn pl back" href="../index.html">← 索引</a>
+
+    <div class="win" style="margin-bottom:28px">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>SessionBridge · 选择 Workspace</div>
+      <div class="vp" style="aspect-ratio:1280/720">
+        <div class="gate">
+          <div class="gate-panel">
+            <div class="gate-icon">SB</div>
+            <h1>SessionBridge</h1>
+            <p>选择项目目录；尚未初始化时可以直接创建 Workspace。</p>
+            <button class="btn f lg" type="button">打开 Workspace</button>
+            <p class="muted" style="margin-top:16px">对应 API：workspace_restore · workspace_open</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-h"><h2 style="font-size:17px">未初始化错误态</h2><span class="tag">WORKSPACE_NOT_FOUND</span></div>
+    <p class="lead">打开目录失败且 code 为 WORKSPACE_NOT_FOUND 时，展示路径并提供「初始化并打开」。</p>
+
+    <div class="win">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>SessionBridge · 初始化</div>
+      <div class="vp" style="aspect-ratio:1280/720">
+        <div class="gate">
+          <div class="gate-panel">
+            <div class="gate-icon">SB</div>
+            <h1>SessionBridge</h1>
+            <p>选择项目目录；尚未初始化时可以直接创建 Workspace。</p>
+            <button class="btn f lg" type="button">打开 Workspace</button>
+            <div style="margin-top:18px;text-align:left">
+              <div class="error-card">
+                <span>⚠</span>
+                <span>
+                  <strong>WORKSPACE_NOT_FOUND</strong>
+                  <p>该目录尚未初始化 SessionBridge Workspace。</p>
+                  <small>Operation workspace_open</small>
+                </span>
+              </div>
+              <div class="workspace-error-actions" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding:9px 10px;border:.5px solid rgb(var(--sep)/.4);border-radius:12px;background:rgb(var(--fill)/.5)">
+                <span class="mono muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="/home/fufu/Code/DemoApp">/home/fufu/Code/DemoApp</span>
+                <button class="btn f sm" type="button">＋ 初始化并打开</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

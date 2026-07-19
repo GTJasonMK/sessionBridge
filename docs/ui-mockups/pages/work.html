@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · 工作项</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+  <div id="app"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    const d = SB_MOCK.dashboard;
+
+    function statePill(state) {
+      if (state === "accepted") return "ok";
+      if (state === "submitted") return "info";
+      if (state === "open") return "m";
+      return "w";
+    }
+
+    function riskPill(risk) {
+      if (risk === "high" || risk === "critical") return "e";
+      if (risk === "medium") return "w";
+      return "m";
+    }
+
+    const rows = d.work_items.map((item) => `
+      <div class="table-row work-cols">
+        <span class="item-title"><strong>${item.title}</strong><small>${item.description || "无附加描述"}</small></span>
+        <span>${item.kind}</span>
+        <span><span class="pill ${statePill(item.result_state)}">${item.result_state}</span></span>
+        <span title="${item.active_claim?.session_id || ""}">${item.active_claim ? SB_SHELL.shortId(item.active_claim.session_id) : "未认领"}</span>
+        <span><span class="pill ${riskPill(item.risk)}">${item.risk}</span></span>
+      </div>`).join("");
+
+    const positions = [
+      { left: 40, top: 40 }, { left: 280, top: 40 }, { left: 520, top: 40 },
+      { left: 160, top: 180 }, { left: 400, top: 180 }, { left: 280, top: 320 },
+    ];
+
+    const nodes = d.work_items.slice(0, 6).map((item, i) => {
+      const pos = positions[i];
+      return `<div class="graph-node ${item.result_state}" style="left:${pos.left}px;top:${pos.top}px">
+        <strong>${item.title}</strong>
+        <small>${item.kind} · ${item.result_state}</small>
+      </div>`;
+    }).join("");
+
+    const edges = `
+      <div class="graph-edge" style="left:220px;top:72px;width:60px"></div>
+      <div class="graph-edge" style="left:460px;top:72px;width:60px"></div>
+      <div class="graph-edge" style="left:340px;top:150px;width:2px;height:30px;background:linear-gradient(180deg,rgb(var(--p)/.4),rgb(var(--p)/.1))"></div>
+    `;
+
+    const speculative = d.speculative_work.map((item) => `
+      <div class="table-row work-cols" style="grid-template-columns:minmax(200px,1.5fr) 1fr .7fr .8fr .4fr">
+        <span class="item-title"><strong>${item.title}</strong><small>${item.summary || item.assumptions.length + " 个假设"}</small></span>
+        <span class="mono" title="${item.branch}">${item.branch}</span>
+        <span><span class="pill ok">${item.status.replaceAll("_", " ")}</span></span>
+        <span class="mono">${SB_SHELL.shortId(item.base_commit, 10)}</span>
+        <span>v${item.base_plan_version}</span>
+      </div>`).join("");
+
+    const content = `
+      <div class="stack">
+        <div class="work-toolbar">
+          <div class="search-box">
+            <span>⌕</span>
+            <input placeholder="筛选工作项" aria-label="筛选工作项" value="" />
+          </div>
+          <div class="seg" role="group" aria-label="工作项视图">
+            <button type="button" class="on" data-mode="list">☰ 列表</button>
+            <button type="button" data-mode="graph">⬡ 依赖图</button>
+          </div>
+        </div>
+
+        <div id="list-view" class="section-block">
+          <div class="table-row header work-cols">
+            <span>工作项</span><span>类型</span><span>状态</span><span>执行者</span><span>风险</span>
+          </div>
+          ${rows}
+        </div>
+
+        <div id="graph-view" class="graph-canvas" hidden>
+          ${edges}
+          ${nodes}
+        </div>
+
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>隔离探索</h2>
+              <p>${d.speculative_work.length} 个 speculative 结果，不占用共享 Claim</p>
+            </div>
+          </div>
+          <div class="table-row header work-cols" style="grid-template-columns:minmax(200px,1.5fr) 1fr .7fr .8fr .4fr">
+            <span>探索</span><span>分支</span><span>状态</span><span>基线</span><span>Plan</span>
+          </div>
+          ${speculative || `<div class="empty"><span>尚无隔离探索成果</span></div>`}
+        </section>
+      </div>`;
+
+    SB_SHELL.mountShell({
+      activePage: "work",
+      title: d.details.task.title,
+      eyebrow: "工作项",
+      phase: "active",
+      actionsHtml: `
+        <button class="btn icon" type="button" title="刷新">↻</button>
+        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
+        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      contentHtml: content,
+    });
+
+    document.querySelectorAll("[data-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-mode]").forEach((b) => b.classList.remove("on"));
+        btn.classList.add("on");
+        const graph = btn.dataset.mode === "graph";
+        document.getElementById("list-view").hidden = graph;
+        document.getElementById("graph-view").hidden = !graph;
+      });
+    });
+  </script>
+</body>
+</html>

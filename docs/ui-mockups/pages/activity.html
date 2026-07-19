@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · 活动</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+  <div id="app"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    const d = SB_MOCK.dashboard;
+    const events = [...d.recent_events.events].reverse().map((ev) => `
+      <div class="event-row">
+        <span class="event-icon">⌁</span>
+        <span>
+          <strong>${ev.event_type}</strong>
+          <small>${ev.actor_type}${ev.actor_id ? " · " + SB_SHELL.shortId(ev.actor_id) : ""}</small>
+        </span>
+        <time>${SB_SHELL.relativeMicros(ev.created_at_micros)}</time>
+        <code>${ev.entity_type}${ev.entity_id ? ":" + SB_SHELL.shortId(ev.entity_id) : ""}</code>
+      </div>`).join("");
+
+    const content = `
+      <div class="stack">
+        <div class="context-bar">
+          <span>事件流</span>
+          <span>游标 ${d.health.event_cursor}</span>
+          <span>previous ${d.recent_events.previous_cursor}</span>
+          <span>next ${d.recent_events.next_cursor}</span>
+          <span>${d.recent_events.has_more ? "还有更早事件" : "已到尽头"}</span>
+        </div>
+        <section class="section-block">
+          <div class="section-header">
+            <div>
+              <h2>事件流</h2>
+              <p>来自 task_snapshot.recent_events · 对齐 EventView</p>
+            </div>
+            <button class="btn icon" type="button" title="刷新">↻</button>
+          </div>
+          <div class="event-list expanded">${events}</div>
+        </section>
+      </div>`;
+
+    SB_SHELL.mountShell({
+      activePage: "activity",
+      title: d.details.task.title,
+      eyebrow: "活动",
+      phase: "active",
+      actionsHtml: `
+        <button class="btn icon" type="button" title="刷新">↻</button>
+        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
+        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      contentHtml: content,
+    });
+  </script>
+</body>
+</html>

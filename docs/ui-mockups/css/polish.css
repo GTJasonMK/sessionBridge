@@ -1,0 +1,149 @@
+/*
+ * SessionBridge UI Mockups — Polish layer
+ * 跨页面动效、玻璃质感、滚动与无障碍微调
+ */
+
+/* 细滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--sep) / .8) transparent;
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgb(var(--sep) / .75);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--ink3) / .55); }
+
+/* 按钮与可点击项统一反馈 */
+button,
+.task-link,
+.page-link,
+.prompt-item,
+.workspace-switcher {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 玻璃顶栏更通透 */
+.page-header,
+.chrome,
+.inspector-heading,
+.chat-heading {
+  box-shadow: 0 1px 0 rgb(var(--sep) / .2);
+}
+
+/* 卡片入场 */
+.stack > .metric-strip,
+.stack > .section-block,
+.stack > .work-toolbar,
+.stack > .chat-shell {
+  animation: rise-in .36s var(--ease) both;
+}
+
+.stack > .section-block:nth-child(2) { animation-delay: .04s; }
+.stack > .section-block:nth-child(3) { animation-delay: .08s; }
+.stack > .section-block:nth-child(4) { animation-delay: .12s; }
+.stack > .section-block:nth-child(5) { animation-delay: .16s; }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 侧栏激活指示条更丝滑 */
+.task-link.on,
+.page-link.on {
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+/* 主 CTA 微光 */
+.btn.f {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.f::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgb(255 255 255 / .18) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .55s var(--ease);
+  pointer-events: none;
+}
+
+.btn.f:hover::after { transform: translateX(120%); }
+
+/* Live 状态呼吸 */
+.connection-state .dot.live { animation: pulse-live 1.8s var(--ease) infinite; }
+
+/* 表格行悬停微位移 */
+.table-row:not(.header):hover .item-title strong {
+  color: rgb(var(--p));
+}
+
+/* 模态遮罩 */
+.modal-host {
+  animation: fade-in .2s var(--ease);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 焦点环统一 */
+:focus-visible {
+  outline: 2px solid rgb(var(--p) / .55);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+.field:focus,
+.composer-row select:focus,
+.composer-row textarea:focus {
+  outline: none;
+}
+
+/* 减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* 深色模式窗口 chrome 微调 */
+:root[data-theme="dark"] .log-view {
+  background: #0c0e14;
+  color: #d8dce8;
+}
+
+:root[data-theme="dark"] .chrome .dots i:nth-child(1) { background: #ff6b63; }
+:root[data-theme="dark"] .chrome .dots i:nth-child(2) { background: #ffc14a; }
+:root[data-theme="dark"] .chrome .dots i:nth-child(3) { background: #3dd65a; }
+
+/* 文档页导航链接激活态（由 JS 可选增强） */
+.toc a:active { transform: translateY(0); }
+
+/* 预览页脚 */
+.doc-footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: .5px solid rgb(var(--sep) / .4);
+  color: rgb(var(--ink3));
+  font-size: 12px;
+  text-align: center;
+}

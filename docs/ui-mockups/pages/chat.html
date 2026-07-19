@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · 群聊</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+    .content { padding-bottom: 12px !important; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+  <div id="app"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    const d = SB_MOCK.dashboard;
+    const kindLabels = {
+      progress: "进展", intent: "意图", question: "问题", decision: "决定",
+      warning: "风险", handoff: "交接", note: "消息",
+    };
+    const byId = new Map(d.chat_messages.map((m) => [m.id, m]));
+
+    function avatarClass(type) {
+      if (type === "agent") return "agent";
+      if (type === "operator") return "op";
+      return "sys";
+    }
+
+    const messages = d.chat_messages.map((m) => {
+      const replied = m.reply_to_message_id ? byId.get(m.reply_to_message_id) : null;
+      const entities = m.related_entities.length
+        ? `<div class="chat-entities">${m.related_entities.map((e) => `<code>${e.entity_type}:${SB_SHELL.shortId(e.entity_id)}</code>`).join("")}</div>`
+        : "";
+      const initial = m.sender_label.slice(0, 1);
+      return `<div class="chat-message">
+        <div class="avatar ${avatarClass(m.sender_type)} sm">${initial}</div>
+        <div>
+          <div class="chat-meta">
+            <strong>${m.sender_label}</strong>
+            <span class="chat-kind kind-${m.kind}">${kindLabels[m.kind] || m.kind}</span>
+            <time>${SB_SHELL.relativeMicros(m.created_at_micros)}</time>
+          </div>
+          ${replied ? `<div class="chat-reply-preview"><span>↩ <strong>${replied.sender_label}</strong> ${replied.body}</span></div>` : ""}
+          <p class="body">${m.body}</p>
+          ${entities}
+        </div>
+        <button class="btn icon sm chat-reply-btn" type="button" title="回复">↩</button>
+      </div>`;
+    }).join("");
+
+    const content = `
+      <section class="chat-shell">
+        <div class="chat-heading">
+          <div>
+            <h2>任务群聊</h2>
+            <p>${d.chat_messages.length} 条消息 · Event 游标 ${d.health.event_cursor}</p>
+          </div>
+          <span style="color:rgb(var(--p))">💬</span>
+        </div>
+        <div class="chat-feed" id="chat-feed">${messages}</div>
+        <div class="chat-composer">
+          <div class="composer-row">
+            <select aria-label="消息类型">
+              ${Object.entries(kindLabels).map(([v, l]) => `<option value="${v}" ${v === "note" ? "selected" : ""}>${l}</option>`).join("")}
+            </select>
+            <textarea rows="2" maxlength="8000" placeholder="发送消息到任务群聊（Ctrl/⌘ + Enter）" aria-label="群聊消息"></textarea>
+            <button class="btn f chat-send" type="button" title="发送">➤</button>
+          </div>
+        </div>
+      </section>`;
+
+    SB_SHELL.mountShell({
+      activePage: "chat",
+      title: d.details.task.title,
+      eyebrow: "群聊",
+      phase: "active",
+      showInspector: false,
+      actionsHtml: `
+        <button class="btn icon" type="button" title="刷新">↻</button>
+        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
+        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      contentHtml: content,
+    });
+
+    // 交互演示：发送模拟消息
+    const feed = document.getElementById("chat-feed");
+    const textarea = document.querySelector(".composer-row textarea");
+    const select = document.querySelector(".composer-row select");
+    const sendBtn = document.querySelector(".chat-send");
+
+    function sendDemo() {
+      const body = (textarea.value || "").trim();
+      if (!body) return;
+      const kind = select.value;
+      const el = document.createElement("div");
+      el.className = "chat-message";
+      el.innerHTML = `
+        <div class="avatar op sm">O</div>
+        <div>
+          <div class="chat-meta">
+            <strong>Operator</strong>
+            <span class="chat-kind kind-${kind}">${kindLabels[kind]}</span>
+            <time>刚刚</time>
+          </div>
+          <p class="body"></p>
+        </div>
+        <button class="btn icon sm chat-reply-btn" type="button">↩</button>`;
+      el.querySelector(".body").textContent = body;
+      feed.appendChild(el);
+      feed.scrollTop = feed.scrollHeight;
+      textarea.value = "";
+    }
+
+    sendBtn.addEventListener("click", sendDemo);
+    textarea.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") sendDemo();
+    });
+    feed.scrollTop = feed.scrollHeight;
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · Agent 提示词</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <a class="btn pl back" href="../index.html">← 索引</a>
+
+  <div class="win">
+    <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>Agent 提示词 · prompt_list / prompt_show</div>
+    <div class="vp" style="aspect-ratio:1280/800;position:relative">
+      <div class="modal-host" style="position:absolute;inset:0">
+        <div class="modal wide" style="display:flex;flex-direction:column;max-height:min(720px,92%);padding:18px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:.5px solid rgb(var(--sep)/.35);flex:0 0 auto">
+            <div>
+              <h3>Agent 提示词</h3>
+              <p class="desc" style="margin:0">每个席位使用独立 Invitation，提示词按需读取。· 对应 prompt_list / prompt_show</p>
+            </div>
+            <a class="btn icon" href="overview.html" title="关闭">✕</a>
+          </div>
+          <div class="prompt-layout" style="flex:1;min-height:0;margin-top:12px">
+            <div class="prompt-list" id="prompt-list"></div>
+            <div class="prompt-preview">
+              <div class="prompt-toolbar">
+                <span class="mono" id="prompt-id">选择席位</span>
+                <button class="btn f sm" type="button" id="btn-copy" disabled>复制提示词</button>
+              </div>
+              <pre id="prompt-body">选择一个 Agent 席位查看提示词</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/mock-data.js"></script>
+  <script>
+    const prompts = SB_MOCK.prompts;
+    const list = document.getElementById("prompt-list");
+    const body = document.getElementById("prompt-body");
+    const idEl = document.getElementById("prompt-id");
+    const copyBtn = document.getElementById("btn-copy");
+    let selected = null;
+
+    function statePill(status) {
+      if (status === "consumed") return "ok";
+      if (status === "pending") return "info";
+      return "m";
+    }
+
+    function select(item) {
+      selected = item;
+      list.querySelectorAll(".prompt-item").forEach((el) => {
+        el.classList.toggle("on", el.dataset.id === item.invite_id);
+      });
+      idEl.textContent = item.invite_id.slice(0, 12);
+      body.textContent = item.prompt || "（空提示词）";
+      copyBtn.disabled = !item.prompt;
+    }
+
+    list.innerHTML = prompts.map((p) => `
+      <button class="prompt-item" type="button" data-id="${p.invite_id}">
+        <span><span class="avatar sm agent">A${p.batch_index}</span><strong>Agent ${p.batch_index}</strong></span>
+        <span class="pill ${statePill(p.status)}">${p.status}</span>
+      </button>`).join("");
+
+    list.querySelectorAll(".prompt-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const item = prompts.find((p) => p.invite_id === btn.dataset.id);
+        if (item) select(item);
+      });
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      if (!selected?.prompt) return;
+      try {
+        await navigator.clipboard.writeText(selected.prompt);
+        copyBtn.textContent = "已复制";
+        setTimeout(() => { copyBtn.textContent = "复制提示词"; }, 1200);
+      } catch {
+        copyBtn.textContent = "复制失败";
+      }
+    });
+
+    // 默认选中第一个 pending 可发送席位
+    select(prompts.find((p) => p.status === "pending") || prompts[0]);
+  </script>
+</body>
+</html>

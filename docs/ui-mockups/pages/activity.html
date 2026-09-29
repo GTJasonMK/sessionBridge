@@ -11,19 +11,20 @@
   <link rel="stylesheet" href="../css/polish.css" />
   <style>
     body { margin: 0; padding: 20px 16px 48px; }
-    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
   </style>
 </head>
 <body>
-  <a class="btn pl back" href="../index.html">← 索引</a>
   <div id="app"></div>
   <script src="../js/mock-data.js"></script>
+  <script src="../js/icons.js"></script>
   <script src="../js/shell.js"></script>
   <script>
     const d = SB_MOCK.dashboard;
+    const ico = SB_SHELL.ico;
+
     const events = [...d.recent_events.events].reverse().map((ev) => `
       <div class="event-row">
-        <span class="event-icon">⌁</span>
+        <span class="event-icon">${ico("activity")}</span>
         <span>
           <strong>${ev.event_type}</strong>
           <small>${ev.actor_type}${ev.actor_id ? " · " + SB_SHELL.shortId(ev.actor_id) : ""}</small>
@@ -35,7 +36,7 @@
     const content = `
       <div class="stack">
         <div class="context-bar">
-          <span>事件流</span>
+          <span>${ico("activity")} 事件流</span>
           <span>游标 ${d.health.event_cursor}</span>
           <span>previous ${d.recent_events.previous_cursor}</span>
           <span>next ${d.recent_events.next_cursor}</span>
@@ -45,11 +46,11 @@
           <div class="section-header">
             <div>
               <h2>事件流</h2>
-              <p>来自 task_snapshot.recent_events · 对齐 EventView</p>
+              <p>task_snapshot.recent_events · EventView</p>
             </div>
-            <button class="btn icon" type="button" title="刷新">↻</button>
+            <button class="btn icon" type="button" data-action="refresh" data-tip="刷新">${ico("refresh")}</button>
           </div>
-          <div class="event-list expanded">${events}</div>
+          <div class="event-list expanded">${events || `<div class="empty">尚无事件</div>`}</div>
         </section>
       </div>`;
 
@@ -58,10 +59,7 @@
       title: d.details.task.title,
       eyebrow: "活动",
       phase: "active",
-      actionsHtml: `
-        <button class="btn icon" type="button" title="刷新">↻</button>
-        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
-        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      subtitle: `游标 ${d.health.event_cursor}`,
       contentHtml: content,
     });
   </script>

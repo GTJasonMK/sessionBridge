@@ -16,8 +16,8 @@
         "title": "SessionBridge",
         "width": 1380,
         "height": 860,
-        "minWidth": 1024,
-        "minHeight": 700,
+        "minWidth": 390,
+        "minHeight": 520,
         "center": true,
         "resizable": true,
         "fullscreen": false
@@ -29,6 +29,7 @@
   },
   "bundle": {
     "active": true,
+    "icon": ["icons/icon.png"],
     "targets": ["appimage", "deb"],
     "category": "DeveloperTool",
     "shortDescription": "Coordinate autonomous coding agents",

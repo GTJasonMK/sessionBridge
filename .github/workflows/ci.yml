@@ -32,6 +32,7 @@ jobs:
             librsvg2-dev \
             patchelf \
             xdg-utils
+          sudo apt-get install -y bubblewrap
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -60,6 +61,27 @@ jobs:
 
       - name: Run Rust tests
         run: timeout 60s cargo test --workspace
+
+      - name: Build CLI and exercise native protocol fixtures
+        run: |
+          cargo build --bin sessionbridge
+          timeout 60s python3 tests/bridge_runtime.py target/debug/sessionbridge
+
+      - name: Install browser test tools
+        run: |
+          python3 -m pip install playwright
+          python3 -m playwright install --with-deps chromium
+
+      - name: Exercise workgroup UI with the real backend
+        run: |
+          npm --prefix gui run dev > /tmp/sessionbridge-vite.log 2>&1 &
+          vite_pid=$!
+          trap 'kill "$vite_pid"' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:1420 > /dev/null && break
+            sleep 1
+          done
+          timeout 60s python3 tests/bridge_ui.py target/debug/sessionbridge
 
       - name: Run frontend tests
         working-directory: gui

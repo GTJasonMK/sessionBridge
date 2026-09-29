@@ -11,16 +11,16 @@
   <link rel="stylesheet" href="../css/polish.css" />
   <style>
     body { margin: 0; padding: 20px 16px 48px; }
-    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
   </style>
 </head>
 <body>
-  <a class="btn pl back" href="../index.html">← 索引</a>
   <div id="app"></div>
   <script src="../js/mock-data.js"></script>
+  <script src="../js/icons.js"></script>
   <script src="../js/shell.js"></script>
   <script>
     const d = SB_MOCK.dashboard;
+    const ico = SB_SHELL.ico;
 
     function statePill(state) {
       if (state === "accepted") return "ok";
@@ -36,8 +36,11 @@
     }
 
     const rows = d.work_items.map((item) => `
-      <div class="table-row work-cols">
-        <span class="item-title"><strong>${item.title}</strong><small>${item.description || "无附加描述"}</small></span>
+      <div class="table-row work-cols" data-filter-text="${SB_SHELL.escapeHtml((item.title + " " + item.kind + " " + (item.description || "")).toLowerCase())}">
+        <span class="item-title" title="${SB_SHELL.escapeHtml(item.description || "")}">
+          <strong>${SB_SHELL.escapeHtml(item.title)}</strong>
+          <small>${SB_SHELL.escapeHtml(item.description || "无附加描述")}</small>
+        </span>
         <span>${item.kind}</span>
         <span><span class="pill ${statePill(item.result_state)}">${item.result_state}</span></span>
         <span title="${item.active_claim?.session_id || ""}">${item.active_claim ? SB_SHELL.shortId(item.active_claim.session_id) : "未认领"}</span>
@@ -45,27 +48,36 @@
       </div>`).join("");
 
     const positions = [
-      { left: 40, top: 40 }, { left: 280, top: 40 }, { left: 520, top: 40 },
-      { left: 160, top: 180 }, { left: 400, top: 180 }, { left: 280, top: 320 },
+      { left: 40, top: 48 }, { left: 280, top: 48 }, { left: 520, top: 48 },
+      { left: 160, top: 200 }, { left: 400, top: 200 }, { left: 280, top: 340 },
     ];
 
     const nodes = d.work_items.slice(0, 6).map((item, i) => {
       const pos = positions[i];
-      return `<div class="graph-node ${item.result_state}" style="left:${pos.left}px;top:${pos.top}px">
-        <strong>${item.title}</strong>
+      return `<div class="graph-node ${item.result_state}" style="left:${pos.left}px;top:${pos.top}px" data-tip="${item.kind} · ${item.result_state}">
+        <strong>${SB_SHELL.escapeHtml(item.title)}</strong>
         <small>${item.kind} · ${item.result_state}</small>
       </div>`;
     }).join("");
 
     const edges = `
-      <div class="graph-edge" style="left:220px;top:72px;width:60px"></div>
-      <div class="graph-edge" style="left:460px;top:72px;width:60px"></div>
-      <div class="graph-edge" style="left:340px;top:150px;width:2px;height:30px;background:linear-gradient(180deg,rgb(var(--p)/.4),rgb(var(--p)/.1))"></div>
-    `;
+      <svg class="graph-svg" width="100%" height="100%" style="position:absolute;inset:0;pointer-events:none">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="rgb(72 98 176 / .45)"/>
+          </marker>
+        </defs>
+        <line x1="220" y1="80" x2="280" y2="80" stroke="rgb(72 98 176 / .35)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="460" y1="80" x2="520" y2="80" stroke="rgb(72 98 176 / .35)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="370" y1="120" x2="250" y2="200" stroke="rgb(72 98 176 / .3)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="370" y1="120" x2="490" y2="200" stroke="rgb(72 98 176 / .3)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="250" y1="260" x2="360" y2="340" stroke="rgb(72 98 176 / .3)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="490" y1="260" x2="400" y2="340" stroke="rgb(72 98 176 / .3)" stroke-width="1.5" marker-end="url(#arrow)"/>
+      </svg>`;
 
     const speculative = d.speculative_work.map((item) => `
       <div class="table-row work-cols" style="grid-template-columns:minmax(200px,1.5fr) 1fr .7fr .8fr .4fr">
-        <span class="item-title"><strong>${item.title}</strong><small>${item.summary || item.assumptions.length + " 个假设"}</small></span>
+        <span class="item-title"><strong>${SB_SHELL.escapeHtml(item.title)}</strong><small>${SB_SHELL.escapeHtml(item.summary || item.assumptions.length + " 个假设")}</small></span>
         <span class="mono" title="${item.branch}">${item.branch}</span>
         <span><span class="pill ok">${item.status.replaceAll("_", " ")}</span></span>
         <span class="mono">${SB_SHELL.shortId(item.base_commit, 10)}</span>
@@ -76,12 +88,12 @@
       <div class="stack">
         <div class="work-toolbar">
           <div class="search-box">
-            <span>⌕</span>
-            <input placeholder="筛选工作项" aria-label="筛选工作项" value="" />
+            ${ico("search")}
+            <input id="work-filter" placeholder="筛选工作项（标题 / 类型）" aria-label="筛选工作项" autocomplete="off" />
           </div>
           <div class="seg" role="group" aria-label="工作项视图">
-            <button type="button" class="on" data-mode="list">☰ 列表</button>
-            <button type="button" data-mode="graph">⬡ 依赖图</button>
+            <button type="button" class="on" data-mode="list">${ico("list")} 列表</button>
+            <button type="button" data-mode="graph">${ico("graph")} 依赖图</button>
           </div>
         </div>
 
@@ -90,6 +102,7 @@
             <span>工作项</span><span>类型</span><span>状态</span><span>执行者</span><span>风险</span>
           </div>
           ${rows}
+          <div class="table-empty-filter" id="filter-empty">${ico("search")} 没有匹配的工作项</div>
         </div>
 
         <div id="graph-view" class="graph-canvas" hidden>
@@ -116,10 +129,7 @@
       title: d.details.task.title,
       eyebrow: "工作项",
       phase: "active",
-      actionsHtml: `
-        <button class="btn icon" type="button" title="刷新">↻</button>
-        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
-        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      subtitle: `${d.work_items.length} 项 · ${d.relations.length} 条依赖`,
       contentHtml: content,
     });
 
@@ -131,6 +141,19 @@
         document.getElementById("list-view").hidden = graph;
         document.getElementById("graph-view").hidden = !graph;
       });
+    });
+
+    const filterInput = document.getElementById("work-filter");
+    const filterEmpty = document.getElementById("filter-empty");
+    filterInput?.addEventListener("input", () => {
+      const q = filterInput.value.trim().toLowerCase();
+      let visible = 0;
+      document.querySelectorAll("#list-view .table-row[data-filter-text]").forEach((row) => {
+        const show = !q || row.getAttribute("data-filter-text").includes(q);
+        row.classList.toggle("is-hidden", !show);
+        if (show) visible++;
+      });
+      filterEmpty?.classList.toggle("show", visible === 0);
     });
   </script>
 </body>

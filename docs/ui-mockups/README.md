@@ -20,8 +20,22 @@ python3 -m http.server 8765 --directory docs/ui-mockups
 |------|------|
 | 气质 | iOS 纸面、玻璃顶栏、轻阴影、大圆角 |
 | 主色 | 静谧靛蓝 `rgb(72 98 176)`（相对 A4N 暖棕的微调） |
-| 动效 | hover 抬升、主按钮扫光、卡片 rise-in、live 呼吸点；尊重 `prefers-reduced-motion` |
+| 动效 | hover 抬升、主按钮扫光、卡片 rise-in、live 呼吸、Toast / 骨架；尊重 `prefers-reduced-motion` |
 | 壳层 | 侧栏 · 主区 · Inspector 三栏（窄屏收 Inspector） |
+| 主题 | 系统 / 浅色 / 深色，`localStorage` 键 `sessionbridge-mock-theme` |
+
+## 细节清单（本轮已补）
+
+- 统一 SVG 图标（`js/icons.js`），避免 emoji 跨平台差异
+- 预览顶栏面包屑、导航角标（群聊数 / 关注数 / 诊断警告）
+- 概览：缺口与阻塞列表、流水线进度条
+- 工作项：即时筛选、SVG 依赖箭头图
+- 群聊：回复条、字数统计、发送 Toast、空内容校验
+- 发布：同侧栏内编辑 ↔ Preflight 切换、脏工作区拒绝态
+- 提示词：复制成功态 + Toast
+- 边界页 `states.html`：空任务 / 骨架加载 / 错误重试 / 暂停条幅
+- Inspector：可复制 Task ID、关注点摘要、暂停/恢复模拟
+- Toast、工具提示、主题三态切换
 
 ## 与后端能力的对应
 

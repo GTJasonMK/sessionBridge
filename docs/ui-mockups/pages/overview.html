@@ -11,19 +11,19 @@
   <link rel="stylesheet" href="../css/polish.css" />
   <style>
     body { margin: 0; padding: 20px 16px 48px; }
-    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
   </style>
 </head>
 <body>
-  <a class="btn pl back" href="../index.html">← 索引</a>
   <div id="app"></div>
   <script src="../js/mock-data.js"></script>
+  <script src="../js/icons.js"></script>
   <script src="../js/shell.js"></script>
   <script>
     const d = SB_MOCK.dashboard;
     const s = d.health.signals;
     const attention = s.open_blockers + s.open_required_gaps + s.open_invalidations + s.required_deliverables_open;
     const p = d.pipeline;
+    const ico = SB_SHELL.ico;
 
     function stage(label, complete, total, detail) {
       const ready = total === 0 || complete >= total;
@@ -33,7 +33,7 @@
         <div>
           <small>${label}</small>
           <strong>${complete} / ${total}</strong>
-          <p>${detail || (ready ? "当前阶段已满足" : `${total - complete} 项待处理`)}</p>
+          <p>${detail || (ready ? "当前阶段已满足" : `${Math.max(0, total - complete)} 项待处理`)}</p>
         </div>
         <div class="pipeline-progress"><i style="width:${pct}%"></i></div>
       </div>`;
@@ -43,7 +43,10 @@
       const st = item.status === "verified" || item.status === "waived" ? "ok"
         : item.status === "submitted" ? "info" : item.status === "open" ? "w" : "m";
       return `<div class="table-row deliverable-cols">
-        <span class="item-title"><strong>${item.title}</strong><small>${item.key}${item.required ? " · required" : ""}</small></span>
+        <span class="item-title" title="${SB_SHELL.escapeHtml(item.description || "")}">
+          <strong>${SB_SHELL.escapeHtml(item.title)}</strong>
+          <small>${item.key}${item.required ? " · required" : ""}</small>
+        </span>
         <span>${item.kind}</span>
         <span><span class="pill ${st}">${item.status}</span></span>
         <span>${item.work_item_ids.length}</span>
@@ -53,7 +56,7 @@
 
     const events = [...d.recent_events.events].slice(0, 6).map((ev) => `
       <div class="event-row">
-        <span class="event-icon">⌁</span>
+        <span class="event-icon">${ico("activity")}</span>
         <span><strong>${ev.event_type}</strong><small>${ev.actor_type}${ev.actor_id ? " · " + SB_SHELL.shortId(ev.actor_id) : ""}</small></span>
         <time>${SB_SHELL.relativeMicros(ev.created_at_micros)}</time>
       </div>`).join("");
@@ -63,13 +66,34 @@
       .map((w) => `<span class="pill ${w.severity === "critical" ? "e" : "w"}">${w.code} · ${w.count}</span>`)
       .join("");
 
+    const gapRows = (d.gaps || []).map((g) => `
+      <div class="issue-row">
+        <span class="diagnostic-icon ${g.severity === "high" || g.severity === "critical" ? "fail" : ""}">!</span>
+        <span>
+          <strong>${SB_SHELL.escapeHtml(g.title)}</strong>
+          <small>${SB_SHELL.escapeHtml(g.description || "")} · ${g.kind}${g.required ? " · required" : ""}</small>
+        </span>
+        <span class="pill ${g.status === "open" ? "w" : "ok"}">${g.status}</span>
+      </div>`).join("");
+
+    const blockerRows = (d.blockers || []).map((b) => `
+      <div class="issue-row">
+        <span class="diagnostic-icon fail">!</span>
+        <span>
+          <strong>${SB_SHELL.escapeHtml(b.reason)}</strong>
+          <small>work_item:${SB_SHELL.shortId(b.work_item_id)} 等待 ${b.waits_for_type}${b.waits_for_id ? ":" + SB_SHELL.shortId(b.waits_for_id) : ""}</small>
+        </span>
+        <span class="pill e">${b.status}</span>
+      </div>`).join("");
+
     const content = `
       <div class="stack">
         <div class="context-bar">
-          <span>◎ 概览</span>
+          <span>${ico("overview")} 概览</span>
           <span>游标 ${d.health.event_cursor}</span>
           <span>Plan v${d.health.task.plan_version}</span>
           <span>分支 ${d.details.task.target_branch}</span>
+          <span data-tip="SQLite WAL · 本机近实时">${ico("activity")} 实时同步</span>
         </div>
 
         <div class="metric-strip">
@@ -106,6 +130,20 @@
           </div>
           ${blockers ? `<div class="completion-blockers">${blockers}</div>` : ""}
         </section>
+
+        ${
+          gapRows || blockerRows
+            ? `<section class="section-block">
+                <div class="section-header">
+                  <div>
+                    <h2>缺口与阻塞</h2>
+                    <p>gaps · blockers — 驱动「需要关注」指标</p>
+                  </div>
+                </div>
+                <div class="issue-list">${gapRows}${blockerRows}</div>
+              </section>`
+            : ""
+        }
 
         <section class="section-block">
           <div class="section-header">
@@ -147,7 +185,7 @@
         <section class="section-block">
           <div class="section-header">
             <div><h2>最近活动</h2><p>${d.recent_events.events.length} 条事件</p></div>
-            <a class="btn pl sm" href="activity.html">查看全部</a>
+            <a class="btn pl sm" href="activity.html">查看全部 ${ico("chevron")}</a>
           </div>
           <div class="event-list">${events}</div>
         </section>
@@ -158,10 +196,7 @@
       title: d.details.task.title,
       eyebrow: "概览",
       phase: "active",
-      actionsHtml: `
-        <button class="btn icon" type="button" title="刷新">↻</button>
-        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
-        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
+      subtitle: "task_snapshot · 1.5s 轮询",
       contentHtml: content,
     });
   </script>

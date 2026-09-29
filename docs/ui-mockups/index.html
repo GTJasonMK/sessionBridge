@@ -28,6 +28,7 @@
       </div>
       <div class="doc-links">
         <a href="components/atoms.html">组件库</a>
+        <a href="pages/states.html">状态与边界</a>
         <a href="pages/workspace-gate.html">Workspace 门禁</a>
         <a href="pages/overview.html">概览</a>
         <a href="pages/work.html">工作项</a>
@@ -44,9 +45,10 @@
       <b>设计原则</b>
       <ul>
         <li>操作者路径：发布任务 → 接入 Agent → 观察结果；不替 Agent 做决策。</li>
-        <li>信息架构对齐现有 GUI 六页：概览 / 工作项 / Agent / 群聊 / 活动 / 诊断 + 门禁与两个对话框。</li>
-        <li>视觉：暖灰背景、纸面卡片、半透明顶栏、左侧选中条、柔和阴影与 160–320ms 缓动。</li>
-        <li>文件职责：<code>css/</code> 令牌与样式 · <code>js/</code> 模拟数据与壳层 · <code>pages/</code> 页面 · <code>components/</code> 组件展柜。</li>
+        <li>信息架构对齐现有 GUI 六页：概览 / 工作项 / Agent / 群聊 / 活动 / 诊断 + 门禁与对话框 + 边界态。</li>
+        <li>视觉：纸面卡片、玻璃顶栏、左侧选中渐变条、主按钮扫光、Toast / 骨架 / 工具提示。</li>
+        <li>交互：主题三态持久化、暂停/恢复、复制 ID、群聊回复与字数、工作项筛选、Preflight 流程。</li>
+        <li>文件职责：<code>css/</code> · <code>js/</code>（含 icons）· <code>pages/</code> · <code>components/</code>。</li>
       </ul>
     </div>
 
@@ -124,6 +126,10 @@
           <h4>组件库</h4>
           <div class="muted">按钮、徽章、指标、表单、状态点</div>
         </a>
+        <a class="showcase-card" href="pages/states.html" style="text-decoration:none;color:inherit">
+          <h4>状态与边界</h4>
+          <div class="muted">空任务 · 加载 · 错误 · 暂停 · Toast</div>
+        </a>
         <a class="showcase-card" href="pages/workspace-gate.html" style="text-decoration:none;color:inherit">
           <h4>Workspace 门禁</h4>
           <div class="muted">打开 / 初始化 / 错误恢复</div>
@@ -176,18 +182,20 @@
 │   └── polish.css             # 跨页抛光与动效
 ├── js/
 │   ├── mock-data.js           # 对齐 types.ts 的模拟数据
-│   └── shell.js               # 侧栏 / 顶栏 / Inspector 拼装
+│   ├── icons.js               # 内联 SVG 图标
+│   └── shell.js               # 侧栏 / 顶栏 / Inspector / Toast / 主题
 ├── components/
 │   └── atoms.html             # 组件真实展示
 └── pages/
+    ├── states.html            # 空态 / 加载 / 错误 / 暂停
     ├── workspace-gate.html
-    ├── overview.html
-    ├── work.html
+    ├── overview.html          # 含缺口与阻塞
+    ├── work.html              # 筛选 + SVG 依赖图
     ├── agents.html
-    ├── chat.html
+    ├── chat.html              # 回复 / 字数 / 发送 Toast
     ├── activity.html
     ├── diagnostics.html
-    ├── launch.html
+    ├── launch.html            # Preflight 切换 + 脏树拒绝
     └── prompts.html</pre>
       </div>
     </section>

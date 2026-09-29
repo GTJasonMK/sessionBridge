@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SessionBridge · 状态与边界</title>
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/atoms.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pages.css" />
+  <link rel="stylesheet" href="../css/polish.css" />
+  <style>
+    body { margin: 0; padding: 20px 16px 48px; }
+  </style>
+</head>
+<body>
+  <div id="app-host"></div>
+  <script src="../js/mock-data.js"></script>
+  <script src="../js/icons.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    // 本页用文档布局展示多种边界态，而非单一 app shell
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      SB_SHELL.renderPreviewBar("状态与边界")
+    );
+
+    const host = document.getElementById("app-host");
+    host.innerHTML = `
+      <div class="doc" style="padding-top:0;max-width:1280px">
+        <header class="doc-hero" style="margin-bottom:20px">
+          <span class="eyebrow">Edge states</span>
+          <h1>空态 · 加载 · 错误 · 暂停</h1>
+          <p>对齐现有 GUI：无任务、dashboard 加载中、snapshot 失败、任务暂停条幅。便于实现时逐态落地。</p>
+        </header>
+
+        <div class="states-grid">
+
+          <section>
+            <div class="sec-h"><h2 style="font-size:17px">空任务</h2><span class="tag">EmptyTask</span></div>
+            <p class="lead">tasks 为空时主区引导发布；侧栏显示「还没有任务」。</p>
+            <div class="win">
+              <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>无任务</div>
+              <div class="vp" style="aspect-ratio:1280/640">
+                <div class="app-shell no-rail">
+                  ${SB_SHELL.renderSidebar("overview", null, { tasks: [] })}
+                  <main class="main-panel">
+                    ${SB_SHELL.renderHeader({ eyebrow: "概览", title: "Workspace", phase: null, actionsHtml: `
+                      <a class="btn f" href="launch.html">${SB_SHELL.ico("plus")} 发布任务</a>` })}
+                    <section class="content">
+                      <div class="empty-task">
+                        <div class="icon-ring">${SB_SHELL.ico("plus")}</div>
+                        <h2>发布第一个任务</h2>
+                        <p>创建任务后，SessionBridge 会生成可发送给 Agent 的独立提示词，并开始同步任务黑板。</p>
+                        <a class="btn f lg" href="launch.html">${SB_SHELL.ico("plus")} 发布任务</a>
+                      </div>
+                    </section>
+                  </main>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec-h"><h2 style="font-size:17px">加载中</h2><span class="tag">LoadingPanel</span></div>
+            <p class="lead">task_snapshot 拉取中：骨架屏 + 同步提示。</p>
+            <div class="win">
+              <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>加载 Dashboard</div>
+              <div class="vp" style="aspect-ratio:1280/520">
+                <div class="app-shell no-rail">
+                  ${SB_SHELL.renderSidebar("overview", "task_auth_impl")}
+                  <main class="main-panel">
+                    ${SB_SHELL.renderHeader({ eyebrow: "概览", title: "实现用户认证与会话", phase: "active", actionsHtml: SB_SHELL.defaultActions() })}
+                    <section class="content">
+                      <div class="stack">
+                        <div class="metric-strip">
+                          <div class="metric"><div class="skeleton line w50"></div><div class="skeleton block" style="margin-top:10px"></div></div>
+                          <div class="metric"><div class="skeleton line w50"></div><div class="skeleton block" style="margin-top:10px"></div></div>
+                          <div class="metric"><div class="skeleton line w50"></div><div class="skeleton block" style="margin-top:10px"></div></div>
+                        </div>
+                        <div class="section-block" style="padding:16px">
+                          <div class="skeleton line w30"></div>
+                          <div class="skeleton line w90"></div>
+                          <div class="skeleton line w70"></div>
+                          <div class="skeleton line w50"></div>
+                        </div>
+                        <div class="loading-panel">
+                          <span class="spinner"></span>
+                          同步 Workspace 状态…
+                        </div>
+                      </div>
+                    </section>
+                  </main>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec-h"><h2 style="font-size:17px">加载失败</h2><span class="tag">ErrorPanel</span></div>
+            <p class="lead">GuiError 卡片 + 重试；展示 code / message / operation_id。</p>
+            <div class="win">
+              <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>Snapshot 失败</div>
+              <div class="vp" style="aspect-ratio:1280/480">
+                <div class="app-shell no-rail">
+                  ${SB_SHELL.renderSidebar("overview", "task_auth_impl")}
+                  <main class="main-panel">
+                    ${SB_SHELL.renderHeader({ eyebrow: "概览", title: "实现用户认证与会话", phase: "active", actionsHtml: SB_SHELL.defaultActions() })}
+                    <section class="content">
+                      <div class="error-panel">
+                        <div class="error-card">
+                          <span>⚠</span>
+                          <span>
+                            <strong>SNAPSHOT_UNAVAILABLE</strong>
+                            <p>无法读取任务快照：数据库忙碌或迁移未完成。</p>
+                            <small>Operation task_snapshot · retryable: true</small>
+                          </span>
+                        </div>
+                        <button class="btn s" type="button" id="btn-retry">${SB_SHELL.ico("refresh")} 重试</button>
+                      </div>
+                    </section>
+                  </main>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec-h"><h2 style="font-size:17px">任务暂停</h2><span class="tag">phase=paused</span></div>
+            <p class="lead">顶栏 phase 徽章为 paused；内容区顶部条幅 + Inspector 显示「恢复」。</p>
+            <div class="win">
+              <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>暂停中</div>
+              <div class="vp auto" style="min-height:560px;height:560px">
+                <div class="app-shell">
+                  ${SB_SHELL.renderSidebar("overview", "task_mcp_watch")}
+                  <main class="main-panel">
+                    ${SB_SHELL.renderHeader({
+                      eyebrow: "概览",
+                      title: "MCP 等待回调优化",
+                      phase: "paused",
+                      actionsHtml: SB_SHELL.defaultActions(),
+                    })}
+                    <section class="content">
+                      <div class="stack">
+                        <div class="banner">
+                          <span>${SB_SHELL.ico("pause")}</span>
+                          <span><strong>任务已暂停</strong> — Agent 不会领取新工作；可恢复或查看历史事件。</span>
+                          <span class="sp"></span>
+                          <button class="btn s sm" type="button" data-action="resume">${SB_SHELL.ico("play")} 恢复</button>
+                        </div>
+                        <div class="metric-strip">
+                          <div class="metric tone-warn">
+                            <span class="label">相位</span>
+                            <span class="value" style="font-size:22px">paused</span>
+                            <span class="detail">task_transition · pause</span>
+                          </div>
+                          <div class="metric">
+                            <span class="label">活跃 Agent</span>
+                            <span class="value">0</span>
+                            <span class="detail">暂停后心跳停止推进</span>
+                          </div>
+                          <div class="metric tone-p">
+                            <span class="label">事件游标</span>
+                            <span class="value">88</span>
+                            <span class="detail">历史仍可回看</span>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                  </main>
+                  ${SB_SHELL.renderInspector({ phase: "paused", task: SB_MOCK.tasks[1] })}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec-h"><h2 style="font-size:17px">Toast · 骨架 · 工具提示</h2><span class="tag">Feedback</span></div>
+            <div class="surface" style="padding:20px">
+              <div class="row-gap" style="margin-bottom:16px">
+                <button class="btn f" type="button" id="t-ok">成功 Toast</button>
+                <button class="btn s" type="button" id="t-err">错误 Toast</button>
+                <button class="btn s" type="button" id="t-info">信息 Toast</button>
+                <button class="btn icon" type="button" data-tip="刷新（悬停提示）">${SB_SHELL.ico("refresh")}</button>
+                <button class="btn s" type="button" data-theme-toggle>主题</button>
+              </div>
+              <div class="grid3">
+                <div><div class="skeleton line w90"></div><div class="skeleton line w70"></div><div class="skeleton line w50"></div></div>
+                <div class="skeleton block"></div>
+                <div class="row-gap"><div class="skeleton circle"></div><div style="flex:1"><div class="skeleton line w70"></div><div class="skeleton line w50"></div></div></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+        <footer class="doc-footer"><a href="../index.html">返回索引</a></footer>
+      </div>`;
+
+    document.getElementById("t-ok")?.addEventListener("click", () =>
+      SB_SHELL.toast({ title: "已复制提示词", message: "Agent 3 · inv_03", tone: "ok" })
+    );
+    document.getElementById("t-err")?.addEventListener("click", () =>
+      SB_SHELL.toast({ title: "LAUNCH_DIRTY", message: "存在未提交路径，默认拒绝发布", tone: "err" })
+    );
+    document.getElementById("t-info")?.addEventListener("click", () =>
+      SB_SHELL.toast({ title: "同步中", message: "event cursor → 149", tone: "info" })
+    );
+    document.getElementById("btn-retry")?.addEventListener("click", (e) => {
+      const btn = e.currentTarget;
+      btn.classList.add("is-refreshing");
+      btn.disabled = true;
+      SB_SHELL.toast({ title: "重试中", message: "task_snapshot…", tone: "info" });
+      setTimeout(() => {
+        btn.classList.remove("is-refreshing");
+        btn.disabled = false;
+        SB_SHELL.toast({ title: "仍失败", message: "可检查 doctor_run", tone: "err" });
+      }, 900);
+    });
+
+    document.querySelectorAll("[data-theme-toggle]").forEach((btn) =>
+      btn.addEventListener("click", () => SB_SHELL.cycleTheme())
+    );
+    document.querySelectorAll("[data-action='resume']").forEach((btn) =>
+      btn.addEventListener("click", () =>
+        SB_SHELL.toast({ title: "任务已恢复", message: "task_transition · resume（模拟）", tone: "ok" })
+      )
+    );
+    // 绑定 inspector 内按钮
+    document.querySelectorAll(".inspector [data-action]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const a = btn.getAttribute("data-action");
+        if (a === "resume") SB_SHELL.toast({ title: "任务已恢复", message: "模拟", tone: "ok" });
+        if (a === "pause") SB_SHELL.toast({ title: "任务已暂停", message: "模拟", tone: "ok" });
+      });
+    });
+    document.querySelectorAll("[data-copy]").forEach((el) => {
+      el.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(el.getAttribute("data-copy") || "");
+          SB_SHELL.toast({ title: "已复制", tone: "ok", duration: 1400 });
+        } catch { /* ignore */ }
+      });
+    });
+  </script>
+</body>
+</html>

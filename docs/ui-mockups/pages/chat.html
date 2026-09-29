@@ -11,22 +11,23 @@
   <link rel="stylesheet" href="../css/polish.css" />
   <style>
     body { margin: 0; padding: 20px 16px 48px; }
-    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
     .content { padding-bottom: 12px !important; }
   </style>
 </head>
 <body>
-  <a class="btn pl back" href="../index.html">← 索引</a>
   <div id="app"></div>
   <script src="../js/mock-data.js"></script>
+  <script src="../js/icons.js"></script>
   <script src="../js/shell.js"></script>
   <script>
     const d = SB_MOCK.dashboard;
+    const ico = SB_SHELL.ico;
     const kindLabels = {
       progress: "进展", intent: "意图", question: "问题", decision: "决定",
       warning: "风险", handoff: "交接", note: "消息",
     };
     const byId = new Map(d.chat_messages.map((m) => [m.id, m]));
+    let replyTo = null;
 
     function avatarClass(type) {
       if (type === "agent") return "agent";
@@ -34,45 +35,57 @@
       return "sys";
     }
 
-    const messages = d.chat_messages.map((m) => {
+    function renderMessage(m) {
       const replied = m.reply_to_message_id ? byId.get(m.reply_to_message_id) : null;
-      const entities = m.related_entities.length
+      const entities = m.related_entities?.length
         ? `<div class="chat-entities">${m.related_entities.map((e) => `<code>${e.entity_type}:${SB_SHELL.shortId(e.entity_id)}</code>`).join("")}</div>`
         : "";
       const initial = m.sender_label.slice(0, 1);
-      return `<div class="chat-message">
+      return `<div class="chat-message" data-msg-id="${m.id}">
         <div class="avatar ${avatarClass(m.sender_type)} sm">${initial}</div>
         <div>
           <div class="chat-meta">
-            <strong>${m.sender_label}</strong>
+            <strong>${SB_SHELL.escapeHtml(m.sender_label)}</strong>
             <span class="chat-kind kind-${m.kind}">${kindLabels[m.kind] || m.kind}</span>
-            <time>${SB_SHELL.relativeMicros(m.created_at_micros)}</time>
+            <time>${m.created_at_micros ? SB_SHELL.relativeMicros(m.created_at_micros) : "刚刚"}</time>
           </div>
-          ${replied ? `<div class="chat-reply-preview"><span>↩ <strong>${replied.sender_label}</strong> ${replied.body}</span></div>` : ""}
-          <p class="body">${m.body}</p>
+          ${replied ? `<div class="chat-reply-preview"><span>${ico("reply")} <strong>${SB_SHELL.escapeHtml(replied.sender_label)}</strong> ${SB_SHELL.escapeHtml(replied.body)}</span></div>` : ""}
+          <p class="body"></p>
           ${entities}
         </div>
-        <button class="btn icon sm chat-reply-btn" type="button" title="回复">↩</button>
+        <button class="btn icon sm chat-reply-btn" type="button" data-reply="${m.id}" data-tip="回复">${ico("reply")}</button>
       </div>`;
-    }).join("");
+    }
+
+    // 先拼 HTML，再填 body 文本以免 XSS；mock 数据可信，仍用 textContent
+    const messagesHtml = d.chat_messages.map(renderMessage).join("");
 
     const content = `
       <section class="chat-shell">
         <div class="chat-heading">
           <div>
             <h2>任务群聊</h2>
-            <p>${d.chat_messages.length} 条消息 · Event 游标 ${d.health.event_cursor}</p>
+            <p>${d.chat_messages.length} 条消息 · Event 游标 ${d.health.event_cursor} · chat_send</p>
           </div>
-          <span style="color:rgb(var(--p))">💬</span>
+          <span style="color:rgb(var(--p))">${ico("chat")}</span>
         </div>
-        <div class="chat-feed" id="chat-feed">${messages}</div>
+        <div class="chat-feed" id="chat-feed">${messagesHtml}</div>
         <div class="chat-composer">
+          <div class="composer-reply" id="reply-bar" hidden>
+            ${ico("reply")}
+            <span id="reply-text"></span>
+            <button class="btn icon sm" type="button" id="reply-clear" data-tip="取消回复">${ico("x")}</button>
+          </div>
           <div class="composer-row">
-            <select aria-label="消息类型">
+            <select aria-label="消息类型" id="msg-kind">
               ${Object.entries(kindLabels).map(([v, l]) => `<option value="${v}" ${v === "note" ? "selected" : ""}>${l}</option>`).join("")}
             </select>
-            <textarea rows="2" maxlength="8000" placeholder="发送消息到任务群聊（Ctrl/⌘ + Enter）" aria-label="群聊消息"></textarea>
-            <button class="btn f chat-send" type="button" title="发送">➤</button>
+            <textarea id="msg-body" rows="2" maxlength="8000" placeholder="发送消息到任务群聊（Ctrl/⌘ + Enter）" aria-label="群聊消息"></textarea>
+            <button class="btn f chat-send" type="button" id="msg-send" title="发送" data-tip="发送">${ico("send")}</button>
+          </div>
+          <div class="composer-meta">
+            <span>类型映射 ChatMessageKind</span>
+            <span id="char-count">0 / 8000</span>
           </div>
         </div>
       </section>`;
@@ -83,45 +96,93 @@
       eyebrow: "群聊",
       phase: "active",
       showInspector: false,
-      actionsHtml: `
-        <button class="btn icon" type="button" title="刷新">↻</button>
-        <a class="btn s" href="prompts.html">⬡ Agent 提示词</a>
-        <a class="btn f" href="launch.html">＋ 发布任务</a>`,
       contentHtml: content,
     });
 
-    // 交互演示：发送模拟消息
     const feed = document.getElementById("chat-feed");
-    const textarea = document.querySelector(".composer-row textarea");
-    const select = document.querySelector(".composer-row select");
-    const sendBtn = document.querySelector(".chat-send");
+    // 填入消息正文
+    d.chat_messages.forEach((m) => {
+      const el = feed.querySelector(`[data-msg-id="${m.id}"] .body`);
+      if (el) el.textContent = m.body;
+    });
+
+    const textarea = document.getElementById("msg-body");
+    const select = document.getElementById("msg-kind");
+    const sendBtn = document.getElementById("msg-send");
+    const replyBar = document.getElementById("reply-bar");
+    const replyText = document.getElementById("reply-text");
+    const charCount = document.getElementById("char-count");
+
+    function setReply(msg) {
+      replyTo = msg;
+      if (!msg) {
+        replyBar.hidden = true;
+        return;
+      }
+      replyBar.hidden = false;
+      replyText.innerHTML = `回复 <strong>${SB_SHELL.escapeHtml(msg.sender_label)}</strong>：${SB_SHELL.escapeHtml(msg.body)}`;
+      textarea.focus();
+    }
+
+    feed.querySelectorAll("[data-reply]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const msg = byId.get(btn.getAttribute("data-reply"));
+        if (msg) setReply(msg);
+      });
+    });
+
+    document.getElementById("reply-clear")?.addEventListener("click", () => setReply(null));
+
+    textarea?.addEventListener("input", () => {
+      const n = textarea.value.length;
+      charCount.textContent = `${n} / 8000`;
+      charCount.classList.toggle("over", n > 8000);
+    });
 
     function sendDemo() {
       const body = (textarea.value || "").trim();
-      if (!body) return;
+      if (!body) {
+        SB_SHELL.toast({ title: "消息为空", message: "请输入内容后再发送", tone: "err", duration: 1600 });
+        return;
+      }
+      if (sendBtn.disabled) return;
+      sendBtn.disabled = true;
+
       const kind = select.value;
-      const el = document.createElement("div");
-      el.className = "chat-message";
-      el.innerHTML = `
-        <div class="avatar op sm">O</div>
-        <div>
-          <div class="chat-meta">
-            <strong>Operator</strong>
-            <span class="chat-kind kind-${kind}">${kindLabels[kind]}</span>
-            <time>刚刚</time>
-          </div>
-          <p class="body"></p>
-        </div>
-        <button class="btn icon sm chat-reply-btn" type="button">↩</button>`;
+      const id = "m_local_" + Date.now();
+      const msg = {
+        id,
+        sender_type: "operator",
+        sender_label: "Operator",
+        kind,
+        body,
+        related_entities: [],
+        reply_to_message_id: replyTo?.id,
+        created_at_micros: Date.now() * 1000,
+      };
+      if (replyTo) byId.set(replyTo.id, replyTo);
+      byId.set(id, msg);
+
+      const wrap = document.createElement("div");
+      wrap.innerHTML = renderMessage(msg);
+      const el = wrap.firstElementChild;
       el.querySelector(".body").textContent = body;
+      el.querySelector("[data-reply]")?.addEventListener("click", () => setReply(msg));
       feed.appendChild(el);
       feed.scrollTop = feed.scrollHeight;
       textarea.value = "";
+      charCount.textContent = "0 / 8000";
+      setReply(null);
+      sendBtn.disabled = false;
+      SB_SHELL.toast({ title: "已发送", message: kindLabels[kind] + " · chat_send（模拟）", tone: "ok", duration: 1600 });
     }
 
-    sendBtn.addEventListener("click", sendDemo);
-    textarea.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") sendDemo();
+    sendBtn?.addEventListener("click", sendDemo);
+    textarea?.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        sendDemo();
+      }
     });
     feed.scrollTop = feed.scrollHeight;
   </script>

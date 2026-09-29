@@ -907,7 +907,6 @@ UNMET_DEPENDENCY
 CAPABILITY_MISMATCH
 CAPABILITY_NOT_GRANTED
 ALREADY_CLAIMED
-SESSION_CAPACITY_REACHED
 HARD_RESOURCE_CONFLICT
 OPEN_BLOCKER
 INPUT_INVALIDATED
@@ -948,7 +947,7 @@ sessionbridge agent join --invite-file invite.json \
   --provision-worktree
 
 sessionbridge agent sync --format json
-sessionbridge agent candidates --explain --format json
+sessionbridge agent candidates --format json
 
 sessionbridge agent intent set --input-json -
 sessionbridge gap report --input-json -
@@ -1327,7 +1326,6 @@ sessionbridge invalidation resolve
 --basis-completion-revision <n>
 --basis-event-cursor <n>
 --observed-cursor <n>
---no-color
 ```
 
 机器模式约束：
@@ -1884,7 +1882,6 @@ VERSION_CONFLICT
 ITEM_NOT_READY
 CAPABILITY_MISMATCH
 CAPABILITY_NOT_GRANTED
-SESSION_CAPACITY_REACHED
 CLAIM_CONFLICT
 CLAIM_EXPIRED
 STALE_CLAIM
@@ -1903,9 +1900,7 @@ COMPLETION_EPOCH_CHANGED
 PARTICIPANT_VERSION_CHANGED
 SESSION_HAS_ACTIVE_WORK
 SESSION_ALREADY_CONCLUDED
-COMPLETION_COHORT_OPEN
 PARTICIPANT_BLOCKED
-PARTICIPANT_STALE
 PARTICIPANT_DEPARTED
 PARTICIPANT_RETIRED
 RETIREMENT_NOT_ALLOWED
@@ -1973,6 +1968,8 @@ SqliteStore / migrations / queries
 Domain 不依赖 clap、rusqlite、终端和 JSON。Application 负责事务级用例，Storage 不复制领域策略。
 
 ## 29. Rust 技术选型
+
+本节保留早期选型与工具候选，不代表当前已启用配置。实际依赖和测试命令以 `Cargo.toml`、`gui/package.json`、`.github/workflows/ci.yml` 为准；已删除或收敛的实现见 [冗余清理记录](REDUNDANCY_CLEANUP.md)。
 
 ```toml
 [package]
@@ -2120,14 +2117,17 @@ MVP 不引入 Tokio、SQLx、Ratatui 和 Web 框架。`cargo-nextest`、`cargo-d
 ### 31.5 CI
 
 ```text
-cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo nextest run --all-features
-cargo test --doc
-cargo deny check 或 cargo audit
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace --no-run
+timeout 60s cargo test --workspace
+cd gui
+npm test
+npm run build
+npm run tauri build -- --no-bundle
 ```
 
-`nextest.toml` 为后端和 CLI 集成测试设置 60 秒超时。MSRV 任务可只在 Linux 运行；当前 stable 再覆盖 Linux、macOS 和 Windows，控制矩阵成本。
+当前 `.github/workflows/ci.yml` 在 Ubuntu 22.04 执行上述检查，Rust 测试先预编译再设置 60 秒总超时。根目录旧 `nextest.toml` 不被当前工具链加载，已删除。Windows/macOS 的运行验证不在当前 CI 矩阵中，不能把 Linux 通过写成全平台通过。
 
 ## 32. 里程碑
 

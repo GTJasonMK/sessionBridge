@@ -11,113 +11,139 @@
   <link rel="stylesheet" href="../css/polish.css" />
   <style>
     body { margin: 0; padding: 20px 16px 48px; }
-    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
   </style>
 </head>
 <body>
-  <a class="btn pl back" href="../index.html">← 索引</a>
-
-  <div class="win" style="margin-bottom:32px">
-    <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>发布新任务 · 编辑</div>
-    <div class="vp" style="aspect-ratio:1280/800;position:relative">
-      <div class="app-shell no-rail" style="filter:blur(2px);opacity:.55;pointer-events:none">
-        <aside class="sidebar" style="padding:16px">
-          <div class="brand-row"><div class="brand-mark">SB</div><div><strong>SessionBridge</strong><span class="sub">Operator Console</span></div></div>
-          <div class="muted" style="padding:12px">后台概览被遮罩</div>
-        </aside>
-        <main class="main-panel" style="background:rgb(var(--bg))"></main>
-      </div>
-      <div class="modal-host" style="position:absolute;inset:0;justify-content:flex-end;padding:0">
-        <div class="modal sheet" id="edit-sheet" style="height:100%;display:flex;flex-direction:column">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:.5px solid rgb(var(--sep)/.35)">
-            <div>
-              <h3>发布新任务</h3>
-              <p class="desc" style="margin:0">使用项目 Profile 创建任务和 Agent 邀请。· launch_preflight</p>
-            </div>
-            <a class="btn icon" href="overview.html" title="关闭">✕</a>
-          </div>
-          <div class="form-stack" style="padding-top:18px;flex:1;overflow:auto">
-            <label class="form-label">
-              <span>任务标题 <span class="req">*</span></span>
-              <input class="field" id="title" value="实现用户认证与会话" />
-            </label>
-            <label class="form-label">
-              <span>任务目标 <span class="req">*</span></span>
-              <textarea class="field" id="objective" rows="8">用户可注册、登录、登出；会话在重启后可恢复。不引入外部托管鉴权服务；状态落在本地 SQLite。关键路径有测试。</textarea>
-            </label>
-            <div class="form-grid">
-              <label class="form-label"><span>Profile</span><input class="field" id="profile" value="normal" /></label>
-              <label class="form-label"><span>Agent 数量</span><input class="field" id="agents" type="number" min="1" max="256" value="4" /></label>
-            </div>
-            <button class="btn f block lg" type="button" id="btn-preflight">🛡 发布前检查</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sec-h"><h2 style="font-size:17px">Preflight 确认态</h2><span class="tag">launch_execute</span></div>
-  <p class="lead">通过 preflight 后展示 baseline / 分支 / Agent 数；存在 dirty_paths 时禁用确认发布。</p>
-
-  <div class="win">
-    <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>发布新任务 · Preflight</div>
-    <div class="vp" style="aspect-ratio:1280/800;position:relative">
-      <div class="modal-host" style="position:absolute;inset:0;justify-content:flex-end;padding:0;background:rgb(28 33 48 / .34)">
-        <div class="modal sheet" style="height:100%;display:flex;flex-direction:column">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:.5px solid rgb(var(--sep)/.35)">
-            <div>
-              <h3>发布新任务</h3>
-              <p class="desc" style="margin:0">Baseline 与 Workspace 已验证</p>
-            </div>
-            <a class="btn icon" href="overview.html">✕</a>
-          </div>
-          <div class="form-stack" style="padding-top:18px" id="preflight-panel">
-            <div class="preflight-status">
-              <span style="font-size:18px">✓</span>
-              <span><strong>可以发布</strong><small>Baseline 与 Workspace 已验证</small></span>
-            </div>
-            <div class="kv"><span>目标分支</span><strong id="pf-branch">main</strong></div>
-            <div class="kv"><span>Baseline</span><strong class="mono" id="pf-base">a1b2c3d4e5f6</strong></div>
-            <div class="kv"><span>Agent</span><strong id="pf-agents">4</strong></div>
-            <div class="kv"><span>有效期</span><strong id="pf-exp">2 小时</strong></div>
-            <div class="kv"><span>自治策略</span><strong id="pf-auto">bounded</strong></div>
-            <div class="button-row">
-              <button class="btn s" type="button" id="btn-back">返回编辑</button>
-              <button class="btn f" type="button" id="btn-launch">＋ 确认发布</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <div id="mount"></div>
   <script src="../js/mock-data.js"></script>
+  <script src="../js/icons.js"></script>
+  <script src="../js/shell.js"></script>
   <script>
+    const ico = SB_SHELL.ico;
     const pf = SB_MOCK.preflight;
+    document.body.insertAdjacentHTML("afterbegin", SB_SHELL.renderPreviewBar("发布任务"));
+
+    document.getElementById("mount").innerHTML = `
+      <div class="win" style="margin-bottom:32px">
+        <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>发布新任务 · 编辑</div>
+        <div class="vp" style="aspect-ratio:1280/800;position:relative">
+          <div class="app-shell no-rail" style="filter:blur(2px);opacity:.5;pointer-events:none">
+            ${SB_SHELL.renderSidebar("overview", "task_auth_impl")}
+            <main class="main-panel" style="background:rgb(var(--bg))"></main>
+          </div>
+          <div class="modal-host" style="position:absolute;inset:0;justify-content:flex-end;padding:0">
+            <div class="modal sheet" style="height:100%;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:.5px solid rgb(var(--sep)/.35)">
+                <div>
+                  <h3>发布新任务</h3>
+                  <p class="desc" style="margin:0">使用项目 Profile 创建任务和 Agent 邀请 · launch_preflight</p>
+                </div>
+                <a class="btn icon" href="overview.html" data-tip="关闭">${ico("x")}</a>
+              </div>
+              <div class="form-stack" style="padding-top:18px;flex:1;overflow:auto" id="edit-form">
+                <label class="form-label">
+                  <span>任务标题 <span class="req">*</span></span>
+                  <input class="field" id="title" value="实现用户认证与会话" />
+                </label>
+                <label class="form-label">
+                  <span>任务目标 <span class="req">*</span></span>
+                  <textarea class="field" id="objective" rows="8">用户可注册、登录、登出；会话在重启后可恢复。不引入外部托管鉴权服务；状态落在本地 SQLite。关键路径有测试。</textarea>
+                </label>
+                <div class="form-grid">
+                  <label class="form-label"><span>Profile</span><input class="field" id="profile" value="normal" /></label>
+                  <label class="form-label"><span>Agent 数量</span><input class="field" id="agents" type="number" min="1" max="256" value="4" /></label>
+                </div>
+                <button class="btn f block lg" type="button" id="btn-preflight">${ico("shield")} 发布前检查</button>
+              </div>
+              <div class="form-stack" style="padding-top:18px;display:none" id="preflight-form">
+                <div class="preflight-status">
+                  <span style="font-size:18px">✓</span>
+                  <span><strong>可以发布</strong><small>Baseline 与 Workspace 已验证</small></span>
+                </div>
+                <div class="kv"><span>目标分支</span><strong id="pf-branch"></strong></div>
+                <div class="kv"><span>Baseline</span><strong class="mono" id="pf-base"></strong></div>
+                <div class="kv"><span>Agent</span><strong id="pf-agents"></strong></div>
+                <div class="kv"><span>有效期</span><strong id="pf-exp"></strong></div>
+                <div class="kv"><span>自治策略</span><strong id="pf-auto"></strong></div>
+                <div class="kv"><span>Objective SHA</span><strong class="mono" id="pf-sha"></strong></div>
+                <div id="dirty-box" hidden class="warning-box">${ico("alert")} <span></span></div>
+                <div class="button-row">
+                  <button class="btn s" type="button" id="btn-back">返回编辑</button>
+                  <button class="btn f" type="button" id="btn-launch">${ico("plus")} 确认发布</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc" style="padding-top:0;max-width:1280px">
+        <div class="sec-h"><h2 style="font-size:17px">脏工作区拒绝态</h2><span class="tag">dirty_paths</span></div>
+        <p class="lead">preflight.dirty_paths 非空时展示警告并禁用确认（对齐真实 launch 默认行为）。</p>
+        <div class="surface" style="padding:16px;max-width:480px">
+          <div class="warning-box" style="margin-bottom:12px">
+            ${ico("alert")}
+            <span>存在 2 个未提交路径，默认不会发布。可显式允许 dirty baseline。</span>
+          </div>
+          <div class="soft" style="margin:0 0 12px">
+            <h5>dirty_paths</h5>
+            <div class="mono" style="font-size:11px;color:rgb(var(--ink2));line-height:1.6">
+              src/auth/mod.rs<br/>docs/TODO.md
+            </div>
+          </div>
+          <div class="button-row" style="justify-content:flex-start">
+            <button class="btn s" type="button" disabled>返回编辑</button>
+            <button class="btn f" type="button" disabled>${ico("plus")} 确认发布</button>
+          </div>
+        </div>
+      </div>
+    `;
+
     document.getElementById("pf-branch").textContent = pf.target_branch;
     document.getElementById("pf-base").textContent = pf.baseline_commit.slice(0, 12);
     document.getElementById("pf-agents").textContent = String(pf.agents);
-    document.getElementById("pf-exp").textContent = pf.expires_in_seconds % 3600 === 0
-      ? `${pf.expires_in_seconds / 3600} 小时`
-      : `${Math.round(pf.expires_in_seconds / 60)} 分钟`;
+    document.getElementById("pf-exp").textContent =
+      pf.expires_in_seconds % 3600 === 0
+        ? `${pf.expires_in_seconds / 3600} 小时`
+        : `${Math.round(pf.expires_in_seconds / 60)} 分钟`;
     document.getElementById("pf-auto").textContent = pf.autonomy_policy;
+    document.getElementById("pf-sha").textContent = pf.objective_sha256.slice(0, 16) + "…";
+
+    const editForm = document.getElementById("edit-form");
+    const preflightForm = document.getElementById("preflight-form");
 
     document.getElementById("btn-preflight")?.addEventListener("click", () => {
+      const title = document.getElementById("title").value.trim();
+      const objective = document.getElementById("objective").value.trim();
+      if (!title || !objective) {
+        SB_SHELL.toast({ title: "请填写必填项", message: "标题与目标不能为空", tone: "err" });
+        return;
+      }
       const btn = document.getElementById("btn-preflight");
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> 检查中…';
+      btn.innerHTML = `<span class="spinner"></span> 检查中…`;
       setTimeout(() => {
         btn.disabled = false;
-        btn.innerHTML = "✓ 检查通过 — 见下方确认态";
-        document.getElementById("preflight-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 600);
+        btn.innerHTML = `${ico("shield")} 发布前检查`;
+        editForm.style.display = "none";
+        preflightForm.style.display = "flex";
+        SB_SHELL.toast({ title: "Preflight 通过", message: "可以确认发布", tone: "ok" });
+      }, 700);
+    });
+
+    document.getElementById("btn-back")?.addEventListener("click", () => {
+      preflightForm.style.display = "none";
+      editForm.style.display = "flex";
     });
 
     document.getElementById("btn-launch")?.addEventListener("click", () => {
       const btn = document.getElementById("btn-launch");
       btn.disabled = true;
-      btn.textContent = "发布中…";
-      setTimeout(() => { window.location.href = "overview.html"; }, 700);
+      btn.innerHTML = `<span class="spinner"></span> 发布中…`;
+      setTimeout(() => {
+        SB_SHELL.toast({ title: "任务已发布", message: "launch_execute（模拟）", tone: "ok" });
+        window.location.href = "overview.html";
+      }, 700);
     });
   </script>
 </body>

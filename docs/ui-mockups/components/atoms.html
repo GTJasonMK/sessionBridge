@@ -30,6 +30,7 @@
       <a href="#table">表格</a>
       <a href="#chat-bits">聊天片段</a>
       <a href="#feedback">反馈</a>
+      <a href="#motion">动效反馈</a>
     </nav>
 
     <section id="buttons">
@@ -203,11 +204,58 @@
           <div class="row-gap muted"><span class="spinner"></span> 同步 Workspace 状态</div>
         </div>
       </div>
+      <div class="col-gap" style="margin-top:14px">
+        <div class="banner"><strong>任务已暂停</strong> — Agent 不会领取新工作。<span class="sp"></span><button class="btn s sm" type="button">恢复</button></div>
+        <div class="banner info"><strong>2 个席位待接入</strong> — 复制提示词后交给 Agent。</div>
+        <div class="banner err"><strong>协作诊断</strong> — 1 严重 · 2 警告</div>
+      </div>
+    </section>
+
+    <section id="motion">
+      <div class="sec-h"><h2>动效与反馈层</h2><span class="tag">toast · skeleton · tip</span></div>
+      <div class="surface" style="padding:20px">
+        <div class="row-gap" style="margin-bottom:16px">
+          <button class="btn f" type="button" id="demo-ok">成功 Toast</button>
+          <button class="btn s" type="button" id="demo-err">错误 Toast</button>
+          <button class="btn icon" type="button" data-tip="悬停显示工具提示">?</button>
+          <button class="btn s" type="button" data-theme-toggle>切换主题</button>
+        </div>
+        <div class="grid3">
+          <div>
+            <div class="skeleton line w90"></div>
+            <div class="skeleton line w70"></div>
+            <div class="skeleton line w50"></div>
+          </div>
+          <div class="skeleton block"></div>
+          <div class="row-gap">
+            <div class="skeleton circle"></div>
+            <div style="flex:1">
+              <div class="skeleton line w70"></div>
+              <div class="skeleton line w40"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <footer class="doc-footer">
       <a href="../index.html">返回索引</a>
+      ·
+      <a href="../pages/states.html">状态页</a>
     </footer>
   </div>
+  <script src="../js/icons.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    document.getElementById("demo-ok")?.addEventListener("click", () =>
+      SB_SHELL.toast({ title: "操作成功", message: "示例 Toast", tone: "ok" })
+    );
+    document.getElementById("demo-err")?.addEventListener("click", () =>
+      SB_SHELL.toast({ title: "操作失败", message: "示例错误", tone: "err" })
+    );
+    document.querySelectorAll("[data-theme-toggle]").forEach((btn) =>
+      btn.addEventListener("click", () => SB_SHELL.cycleTheme())
+    );
+  </script>
 </body>
 </html>

@@ -10,14 +10,13 @@
   <link rel="stylesheet" href="../css/pages.css" />
   <link rel="stylesheet" href="../css/polish.css" />
   <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-    .page-wrap { width: min(1100px, 100%); }
-    .back { display: inline-flex; margin-bottom: 12px; text-decoration: none; }
+    body { margin: 0; min-height: 100vh; padding: 20px 16px 48px; }
+    .page-wrap { width: min(1100px, 100%); margin: 0 auto; }
   </style>
 </head>
 <body>
   <div class="page-wrap">
-    <a class="btn pl back" href="../index.html">← 索引</a>
+    <div id="bar"></div>
 
     <div class="win" style="margin-bottom:28px">
       <div class="chrome"><div class="dots"><i></i><i></i><i></i></div>SessionBridge · 选择 Workspace</div>
@@ -27,8 +26,8 @@
             <div class="gate-icon">SB</div>
             <h1>SessionBridge</h1>
             <p>选择项目目录；尚未初始化时可以直接创建 Workspace。</p>
-            <button class="btn f lg" type="button">打开 Workspace</button>
-            <p class="muted" style="margin-top:16px">对应 API：workspace_restore · workspace_open</p>
+            <button class="btn f lg" type="button" id="btn-open">打开 Workspace</button>
+            <p class="muted" style="margin-top:16px">workspace_restore · workspace_open</p>
           </div>
         </div>
       </div>
@@ -55,9 +54,9 @@
                   <small>Operation workspace_open</small>
                 </span>
               </div>
-              <div class="workspace-error-actions" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding:9px 10px;border:.5px solid rgb(var(--sep)/.4);border-radius:12px;background:rgb(var(--fill)/.5)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding:9px 10px;border:.5px solid rgb(var(--sep)/.4);border-radius:12px;background:rgb(var(--fill)/.5)">
                 <span class="mono muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="/home/fufu/Code/DemoApp">/home/fufu/Code/DemoApp</span>
-                <button class="btn f sm" type="button">＋ 初始化并打开</button>
+                <button class="btn f sm" type="button" id="btn-init">＋ 初始化并打开</button>
               </div>
             </div>
           </div>
@@ -65,5 +64,22 @@
       </div>
     </div>
   </div>
+  <script src="../js/icons.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    document.getElementById("bar").innerHTML = SB_SHELL.renderPreviewBar("Workspace 门禁");
+    document.getElementById("btn-open")?.addEventListener("click", () => {
+      SB_SHELL.toast({ title: "选择目录", message: "将打开系统目录选择器（模拟）", tone: "info" });
+    });
+    document.getElementById("btn-init")?.addEventListener("click", (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> 初始化中…`;
+      setTimeout(() => {
+        SB_SHELL.toast({ title: "Workspace 已就绪", message: "workspace_initialize（模拟）", tone: "ok" });
+        window.location.href = "overview.html";
+      }, 800);
+    });
+  </script>
 </body>
 </html>

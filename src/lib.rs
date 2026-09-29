@@ -1,13 +1,7 @@
-pub mod app;
-pub mod cli;
-pub mod clock;
-pub mod domain;
+pub mod bridge;
 pub mod error;
 pub mod git;
-pub mod invitation;
-pub mod logging;
-pub mod output;
-pub mod storage;
-pub mod workspace;
+pub mod private_files;
 
-pub use error::{ErrorCode, Result, SessionBridgeError};
+#[cfg(not(target_os = "linux"))]
+compile_error!("SessionBridge currently requires Linux");
